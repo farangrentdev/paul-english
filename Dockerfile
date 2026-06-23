@@ -15,16 +15,14 @@ WORKDIR /app
 # --ignore-scripts: postinstall выключен (prisma generate явно ниже).
 # --omit=optional: пропускаем wasm-binding оптики, которые не нужны на x86_64.
 FROM base AS deps
-COPY package.json package-lock.json ./
+# .npmrc форсит зеркало (registry.npmmirror.com) + большие таймауты; этого
+# хватает, чтобы установка из РФ не упиралась в Cloudflare/npmjs.org.
+COPY .npmrc package.json package-lock.json ./
 COPY prisma ./prisma
-ARG NPM_FLAGS="--no-audit --no-fund --no-progress --ignore-scripts --legacy-peer-deps --fetch-timeout=600000 --fetch-retries=5 --fetch-retry-maxtimeout=120000 --registry=https://registry.npmmirror.com/"
-# 1) Основная установка — без --omit=optional, чтобы платформ-специфичные
-#    binary'и (@next/swc-linux-x64-gnu, @swc/core-linux-x64-gnu) ставились
-#    из npm-зеркала и Next.js не пытался качать их с Cloudflare во время build.
-# 2) Резервная явная установка @next/swc-linux-x64-gnu на случай, если в lockfile
-#    он помечен как optional на платформе сборки.
-RUN npm install $NPM_FLAGS \
- && npm install @next/swc-linux-x64-gnu@16.2.7 --no-save $NPM_FLAGS \
+# --legacy-peer-deps — обходит конфликты peer deps от wasm-binding пакетов.
+# --ignore-scripts — postinstall выключен (prisma generate явно ниже).
+# Не указываем --omit=optional: нужны платформ-specific binaries (@next/swc).
+RUN npm install --legacy-peer-deps --ignore-scripts \
  && PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
     npx prisma generate
 
@@ -32,6 +30,7 @@ RUN npm install $NPM_FLAGS \
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# .npmrc и так попадает через COPY . . — но дублируем для надёжности.
 RUN npm run build
 
 # ── runner ──

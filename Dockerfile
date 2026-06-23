@@ -2,19 +2,24 @@
 # SQLite требует постоянного диска: примонтируйте volume и укажите
 # DATABASE_URL=file:/data/app.db (см. README).
 
-FROM node:22-bookworm-slim AS base
+# Node 20 LTS — на Node 22 npm 11 виснет в "Exit handler never called!" на
+# optional wasm-binding пакетах (@unrs/resolver-binding-wasm32-wasi).
+FROM node:20-bookworm-slim AS base
 ENV NODE_ENV=production
 ENV NPM_CONFIG_FUND=false
 ENV NPM_CONFIG_AUDIT=false
+ENV NPM_CONFIG_PROGRESS=false
+ENV NPM_CONFIG_FETCH_RETRIES=2
+ENV NPM_CONFIG_FETCH_TIMEOUT=120000
 WORKDIR /app
 
-# ── deps: ставим зависимости и отдельно генерируем Prisma client ──
-# Postinstall (prisma generate) отключаем через --ignore-scripts — иначе на Node 22
-# срабатывает баг npm "Exit handler never called!" под нагрузкой.
+# ── deps ──
+# --omit=optional пропускает wasm-binding'и для несвойственных платформ.
+# --ignore-scripts отключает postinstall (prisma generate запускаем отдельно).
 FROM base AS deps
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
-RUN npm ci --ignore-scripts \
+RUN npm ci --ignore-scripts --omit=optional \
  && npx prisma generate
 
 # ── build ──

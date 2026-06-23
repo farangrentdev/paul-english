@@ -5,17 +5,21 @@
 # Node 20 LTS — на Node 22 npm 11 виснет в "Exit handler never called!" на
 # optional wasm-binding пакетах (@unrs/resolver-binding-wasm32-wasi).
 FROM node:20-bookworm-slim AS base
-ENV NODE_ENV=production
-ENV NPM_CONFIG_FUND=false
-ENV NPM_CONFIG_AUDIT=false
-ENV NPM_CONFIG_PROGRESS=false
-ENV NPM_CONFIG_FETCH_RETRIES=2
-ENV NPM_CONFIG_FETCH_TIMEOUT=120000
+ENV NODE_ENV=production \
+    NPM_CONFIG_FUND=false \
+    NPM_CONFIG_AUDIT=false \
+    NPM_CONFIG_PROGRESS=false \
+    NPM_CONFIG_FETCH_RETRIES=5 \
+    NPM_CONFIG_FETCH_TIMEOUT=600000 \
+    NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000 \
+    NPM_CONFIG_REGISTRY=https://registry.npmmirror.com/ \
+    PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 WORKDIR /app
 
 # ── deps ──
 # --omit=optional пропускает wasm-binding'и для несвойственных платформ.
 # --ignore-scripts отключает postinstall (prisma generate запускаем отдельно).
+# Реестр и зеркало для Prisma engines — npmmirror (работает стабильно из РФ).
 FROM base AS deps
 COPY package.json package-lock.json ./
 COPY prisma ./prisma

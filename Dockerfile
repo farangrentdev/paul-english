@@ -8,6 +8,10 @@ FROM node:20-bookworm-slim AS base
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
+# openssl нужен Prisma (иначе warn про libssl при generate/migrate/seed)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends openssl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
 
 # ── deps ──
 # npm install (не ci) — терпимее к network glitches и lockfile-нюансам.

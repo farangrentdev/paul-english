@@ -22,7 +22,7 @@ COPY prisma ./prisma
 # --legacy-peer-deps — обходит конфликты peer deps от wasm-binding пакетов.
 # --ignore-scripts — postinstall выключен (prisma generate явно ниже).
 # Не указываем --omit=optional: нужны платформ-specific binaries (@next/swc).
-RUN npm install --legacy-peer-deps --ignore-scripts \
+RUN npm install --include=dev --legacy-peer-deps --ignore-scripts \
  && PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
     ./node_modules/.bin/prisma generate
 

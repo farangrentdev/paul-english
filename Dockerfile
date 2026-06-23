@@ -24,7 +24,7 @@ COPY prisma ./prisma
 # Не указываем --omit=optional: нужны платформ-specific binaries (@next/swc).
 RUN npm install --legacy-peer-deps --ignore-scripts \
  && PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
-    npx prisma generate
+    ./node_modules/.bin/prisma generate
 
 # ── build ──
 FROM base AS build
@@ -45,5 +45,6 @@ COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/next.config.ts ./next.config.ts
 
 EXPOSE 3000
-# применяем миграции и запускаем сервер
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start"]
+# применяем миграции и запускаем сервер (локальная Prisma из node_modules,
+# не npx, чтобы не подтягивать последнюю несовместимую версию)
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && npm run start"]

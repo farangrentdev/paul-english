@@ -2,29 +2,31 @@
 # SQLite требует постоянного диска: примонтируйте volume и укажите
 # DATABASE_URL=file:/data/app.db (см. README).
 
-# Node 20 LTS — на Node 22 npm 11 виснет в "Exit handler never called!" на
+# Node 20 LTS — на Node 22 npm виснет в "Exit handler never called!" на
 # optional wasm-binding пакетах (@unrs/resolver-binding-wasm32-wasi).
 FROM node:20-bookworm-slim AS base
-ENV NODE_ENV=production \
-    NPM_CONFIG_FUND=false \
-    NPM_CONFIG_AUDIT=false \
-    NPM_CONFIG_PROGRESS=false \
-    NPM_CONFIG_FETCH_RETRIES=5 \
-    NPM_CONFIG_FETCH_TIMEOUT=600000 \
-    NPM_CONFIG_FETCH_RETRY_MAXTIMEOUT=120000 \
-    NPM_CONFIG_REGISTRY=https://registry.npmmirror.com/ \
-    PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
+ENV NODE_ENV=production
 WORKDIR /app
 
 # ── deps ──
-# --omit=optional пропускает wasm-binding'и для несвойственных платформ.
-# --ignore-scripts отключает postinstall (prisma generate запускаем отдельно).
-# Реестр и зеркало для Prisma engines — npmmirror (работает стабильно из РФ).
+# npm install (не ci) — терпимее к network glitches и lockfile-нюансам.
+# Зеркало npmmirror.com стабильно из РФ; зеркало для Prisma engines — тоже.
+# --ignore-scripts: postinstall выключен (prisma generate явно ниже).
+# --omit=optional: пропускаем wasm-binding оптики, которые не нужны на x86_64.
 FROM base AS deps
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
-RUN npm ci --ignore-scripts --omit=optional \
- && npx prisma generate
+RUN npm install \
+      --no-audit --no-fund --no-progress \
+      --ignore-scripts \
+      --omit=optional \
+      --legacy-peer-deps \
+      --fetch-timeout=600000 \
+      --fetch-retries=5 \
+      --fetch-retry-maxtimeout=120000 \
+      --registry=https://registry.npmmirror.com/ \
+ && PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    npx prisma generate
 
 # ── build ──
 FROM base AS build

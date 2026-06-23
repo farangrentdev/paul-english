@@ -1,0 +1,212 @@
+// Pavel English — schema (SQLite).
+// Списки (awards/feats/tags/goals/days) хранятся как JSON-строки — см. lib/json.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────── CMS-контент ────────────────────────────
+
+// Singleton (id = 1): hero-преподаватель, about, контакты, футер.
+model SiteSettings {
+  id            Int      @id @default(1)
+  teacherName   String   @default("Павел")
+  teacherRole   String   @default("Преподаватель английского · автор методики")
+  tagline       String   @default("Английский, который наконец-то заговорит")
+  awards        String   @default("[]") // JSON: string[]
+  heroPhotoUrl  String   @default("/uploads/pavel.jpg")
+  aboutLead     String   @default("")
+  aboutBody     String   @default("[]") // JSON: string[] (абзацы)
+  reviewsScore  String   @default("4.9")
+  reviewsCount  String   @default("120+ оценок")
+  email         String   @default("hello@pavelenglish.ru")
+  phone         String   @default("+7 (000) 000-00-00")
+  telegram      String   @default("@pavelenglish")
+  socials       String   @default("[]") // JSON: {label,url}[]
+  footerLegal   String   @default("© 2026 Pavel English · ИП Петров П. П. · ИНН 000000000000")
+  updatedAt     DateTime @updatedAt
+}
+
+model Benefit {
+  id    Int    @id @default(autoincrement())
+  n     String
+  title String
+  desc  String
+  order Int    @default(0)
+}
+
+model LessonType {
+  id    Int    @id @default(autoincrement())
+  tag   String
+  title String
+  desc  String
+  dur   String
+  who   String
+  order Int    @default(0)
+}
+
+model Package {
+  id          Int     @id @default(autoincrement())
+  name        String
+  price       String  // отображаемая строка, напр. "11 200 ₽"
+  priceAmount Int     @default(0) // сумма в рублях для оплаты (0 = бесплатно/проба)
+  per         String
+  popular     Boolean @default(false)
+  accent      Boolean @default(false)
+  feats       String  @default("[]") // JSON: string[]
+  cta         String
+  note        String
+  isTrial     Boolean @default(false) // первая карточка → форма записи, а не оплата
+  order       Int     @default(0)
+}
+
+model Promo {
+  id    Int    @id @default(autoincrement())
+  big   String
+  title String
+  desc  String
+  order Int    @default(0)
+}
+
+model TeamMember {
+  id       Int     @id @default(autoincrement())
+  name     String
+  role     String
+  tags     String  @default("[]") // JSON: string[]
+  note     String
+  photoUrl String?
+  hero     Boolean @default(false)
+  order    Int     @default(0)
+}
+
+model Review {
+  id        Int     @id @default(autoincrement())
+  name      String
+  who       String
+  stars     Int     @default(5)
+  text      String
+  published Boolean @default(true)
+  order     Int     @default(0)
+}
+
+model Faq {
+  id    Int    @id @default(autoincrement())
+  q     String
+  a     String
+  order Int    @default(0)
+}
+
+model Material {
+  id        Int     @id @default(autoincrement())
+  tag       String
+  title     String
+  desc      String
+  size      String
+  fileUrl   String?
+  published Boolean @default(true)
+  order     Int     @default(0)
+}
+
+model LegalDoc {
+  id    Int    @id @default(autoincrement())
+  key   String @unique // privacy | consent | reqs
+  title String
+  body  String @default("[]") // JSON: string[] (абзацы)
+  order Int    @default(0)
+}
+
+// ──────────────────────────── Операционные ────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phone        String?
+  name         String
+  passwordHash String
+  role         String   @default("student") // student | admin
+  packageName  String?  // активный пакет (для кабинета)
+  createdAt    DateTime @default(now())
+
+  lessons   Lesson[]
+  journal   JournalEntry[]
+  materials StudentMaterial[]
+  payments  Payment[]
+  slots     ScheduleSlot[]
+}
+
+model Lead {
+  id           String   @id @default(cuid())
+  name         String
+  contactType  String // Telegram | WhatsApp | Звонок | Email
+  contactValue String
+  level        String?
+  goals        String   @default("[]") // JSON: string[]
+  days         String   @default("[]") // JSON: string[]
+  time         String?
+  status       String   @default("new") // new | contacted | booked | done
+  createdAt    DateTime @default(now())
+}
+
+model Lesson {
+  id       String @id @default(cuid())
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  dateLabel String
+  time     String
+  topic    String
+  status   String @default("plan") // soon | plan | done
+  order    Int    @default(0)
+}
+
+model JournalEntry {
+  id     String @id @default(cuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  date   String
+  topic  String
+  mark   String
+  note   String
+  order  Int    @default(0)
+}
+
+model StudentMaterial {
+  id      String  @id @default(cuid())
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  tag     String
+  title   String
+  size    String
+  fileUrl String?
+  order   Int     @default(0)
+}
+
+model Payment {
+  id          String    @id @default(cuid())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  packageName String
+  period      String
+  amount      Int
+  status      String    @default("pending") // pending | paid | failed | canceled
+  yookassaId  String?   @unique
+  createdAt   DateTime  @default(now())
+  paidAt      DateTime?
+}
+
+model ScheduleSlot {
+  id             String  @id @default(cuid())
+  dayLabel       String // Пн
+  dateLabel      String // 2.06
+  weekOrder      Int     @default(0) // порядок дня
+  time           String // 09:00
+  status         String  @default("free") // free | booked
+  bookedBy       User?   @relation(fields: [bookedByUserId], references: [id], onDelete: SetNull)
+  bookedByUserId String?
+
+  @@unique([weekOrder, time])
+}

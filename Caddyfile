@@ -1,0 +1,20 @@
+# Caddy v2 — авто-HTTPS через Let's Encrypt.
+# Использует переменные окружения DOMAIN и EMAIL (см. docker-compose.yml).
+# Пока DNS на домен не настроен/не разошёлся, отдаёт сайт по IP по HTTP — это
+# удобно проверить деплой сразу, без ожидания DNS.
+
+{
+	email {$EMAIL:admin@pavelenglish.ru}
+}
+
+# Основной сайт — по домену с авто-HTTPS.
+{$DOMAIN:paul-english.ru} www.{$DOMAIN:paul-english.ru} {
+	encode zstd gzip
+	reverse_proxy app:3000
+}
+
+# Fallback по IP/любому другому хосту (HTTP) — на время до DNS-распространения.
+:80 {
+	encode zstd gzip
+	reverse_proxy app:3000
+}

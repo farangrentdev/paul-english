@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getPayment, yookassaConfigured } from "@/lib/yookassa";
+import { createPurchaseForPayment } from "@/lib/packages";
 
 // Webhook ЮKassa: payment.succeeded / payment.canceled.
 // Для надёжности перепроверяем статус через API по id.
@@ -39,6 +40,8 @@ export async function POST(req: Request) {
       where: { id: payment.userId },
       data: { packageName: payment.packageName },
     });
+    // Начисляем занятия пакета на баланс ученика.
+    await createPurchaseForPayment(payment.id);
   } else if (verified.status === "canceled") {
     await prisma.payment.update({
       where: { id: payment.id },

@@ -15,7 +15,14 @@ const LINKS: [string, string][] = [
   ["faq", "Q&A"],
 ];
 
-export function Nav({ logoUrl }: { logoUrl?: string | null }) {
+export function Nav({
+  logoUrl,
+  userLabel,
+}: {
+  logoUrl?: string | null;
+  /** Короткое имя авторизованного пользователя, напр. «Анна В.» */
+  userLabel?: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { openBook } = useSiteModals();
@@ -38,7 +45,23 @@ export function Nav({ logoUrl }: { logoUrl?: string | null }) {
         </div>
 
         <div className="nav__right">
-          <Link className="btn btn--ghost btn--sm" style={{ textDecoration: "none" }} href="/cabinet">Войти</Link>
+          <Link
+            className={"btn btn--sm" + (userLabel ? "" : " btn--ghost")}
+            style={{ textDecoration: "none" }}
+            href="/cabinet"
+            title={userLabel ? "Личный кабинет" : "Войти"}
+          >
+            {userLabel ? (
+              <>
+                <span className="ravatar" style={{ width: 22, height: 22, fontSize: 12, marginRight: 2 }}>
+                  {userLabel[0]}
+                </span>
+                {userLabel}
+              </>
+            ) : (
+              "Войти"
+            )}
+          </Link>
           <button className="btn btn--accent btn--sm" onClick={openBook}>Пробное бесплатно</button>
           <button className="nav__burger" onClick={() => setOpen((o) => !o)} aria-label="Меню"><span></span></button>
         </div>
@@ -50,7 +73,9 @@ export function Nav({ logoUrl }: { logoUrl?: string | null }) {
         ))}
         <Link href="/schedule" onClick={() => setOpen(false)}>Онлайн-запись</Link>
         <Link href="/materials" onClick={() => setOpen(false)}>Материалы</Link>
-        <Link href="/cabinet" onClick={() => setOpen(false)}>Личный кабинет</Link>
+        <Link href="/cabinet" onClick={() => setOpen(false)}>
+          {userLabel ? `Кабинет · ${userLabel}` : "Личный кабинет"}
+        </Link>
         <Link href="/legal" onClick={() => setOpen(false)}>Юр. информация</Link>
       </div>
     </nav>

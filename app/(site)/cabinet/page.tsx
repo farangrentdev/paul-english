@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { CabinetLogin } from "@/components/site/CabinetLogin";
 import { CabinetDashboard } from "@/components/site/CabinetDashboard";
 import type { PayTarget } from "@/components/site/Payment";
+import { getBalances } from "@/lib/packages";
 
 export const metadata = { title: "Личный кабинет — Paul English" };
 
@@ -37,12 +38,21 @@ export default async function CabinetPage({
     );
   }
 
-  const [user, lessons, journal, materials, payments] = await Promise.all([
+  const [user, lessons, journal, materials, payments, balances, members] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
-    prisma.lesson.findMany({ where: { userId: session.user.id }, orderBy: { order: "asc" } }),
+    prisma.lesson.findMany({
+      where: { userId: session.user.id },
+      orderBy: [{ date: "asc" }, { order: "asc" }],
+      include: { member: true, teacher: true },
+    }),
     prisma.journalEntry.findMany({ where: { userId: session.user.id }, orderBy: { order: "asc" } }),
     prisma.studentMaterial.findMany({ where: { userId: session.user.id }, orderBy: { order: "asc" } }),
     prisma.payment.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: "desc" } }),
+    getBalances(session.user.id),
+    prisma.familyMember.findMany({
+      where: { userId: session.user.id },
+      orderBy: [{ isSelf: "desc" }, { order: "asc" }],
+    }),
   ]);
 
   if (!user) return <CabinetLogin />;
@@ -55,22 +65,33 @@ export default async function CabinetPage({
     }
   }
 
+  const lessonsLeft = balances.reduce((sum, b) => sum + b.left, 0);
   const stats = {
     journal: journal.length,
-    upcoming: lessons.filter((l) => l.status !== "done").length,
+    upcoming: lessons.filter((l) => l.status !== "done" && l.status !== "canceled").length,
     lastMark: journal[0]?.mark ?? "—",
-    paid: payments.filter((p) => p.status === "paid").length,
+    left: lessonsLeft,
   };
 
   return (
     <CabinetDashboard
       name={user.name}
       packageName={user.packageName}
-      lessons={lessons.map((l) => ({ id: l.id, time: l.time, dateLabel: l.dateLabel, topic: l.topic, status: l.status }))}
+      lessons={lessons.map((l) => ({
+        id: l.id,
+        time: l.time,
+        dateLabel: l.dateLabel,
+        topic: l.topic,
+        status: l.status,
+        memberName: l.member && !l.member.isSelf ? l.member.name : null,
+        teacherName: l.teacher?.name ?? null,
+      }))}
       journal={journal.map((j) => ({ id: j.id, mark: j.mark, topic: j.topic, date: j.date, note: j.note }))}
       materials={materials.map((m) => ({ id: m.id, tag: m.tag, title: m.title, size: m.size, fileUrl: m.fileUrl }))}
       payments={payments.map((p) => ({ id: p.id, period: p.period, amount: p.amount, status: p.status, packageName: p.packageName }))}
       payTarget={payTarget}
+      balances={balances}
+      members={members.map((m) => ({ id: m.id, name: m.name, relation: m.relation, note: m.note, isSelf: m.isSelf }))}
       stats={stats}
       paidBanner={paid === "1"}
     />

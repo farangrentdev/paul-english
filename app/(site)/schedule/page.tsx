@@ -1,60 +1,76 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { ScheduleGrid, type SlotState } from "@/components/site/ScheduleGrid";
+import { ScheduleGrid, type Cell, type CellState } from "@/components/site/ScheduleGrid";
 import { addDays, isPast, mondayOf, todayKey, weekDays, weekLabel } from "@/lib/week";
 
 export const metadata = { title: "Онлайн-запись — Paul English" };
 
-// Насколько вперёд можно записаться.
 const MAX_WEEKS_AHEAD = 8;
 
 export default async function SchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{ week?: string; teacher?: string }>;
 }) {
-  const { week } = await searchParams;
+  const { week, teacher } = await searchParams;
   const offset = Math.min(Math.max(parseInt(week ?? "0", 10) || 0, 0), MAX_WEEKS_AHEAD);
 
   const session = await auth();
+
+  const teachers = await prisma.teamMember.findMany({
+    where: { takesBookings: true },
+    orderBy: { order: "asc" },
+  });
+
+  if (teachers.length === 0) {
+    return (
+      <div className="page">
+        <div className="page__hero">
+          <div className="wrap">
+            <h1 className="display" style={{ fontSize: "clamp(36px,5vw,64px)" }}>Онлайн-запись</h1>
+            <p className="muted" style={{ marginTop: 14 }}>
+              Расписание пока не опубликовано. Оставьте заявку — подберём время индивидуально.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const activeTeacher =
+    teachers.find((t) => String(t.id) === teacher) ?? teachers[0];
+
   const thisMonday = mondayOf(todayKey());
   const monday = addDays(thisMonday, offset * 7);
   const days = weekDays(monday);
   const weekEnd = addDays(monday, 6);
 
-  const [template, booked] = await Promise.all([
-    prisma.workingSlot.findMany({ where: { enabled: true }, orderBy: { time: "asc" } }),
+  const [slots, members] = await Promise.all([
     prisma.scheduleSlot.findMany({
-      where: { date: { gte: monday, lte: weekEnd } },
+      where: { teacherId: activeTeacher.id, date: { gte: monday, lte: weekEnd } },
     }),
+    session?.user
+      ? prisma.familyMember.findMany({
+          where: { userId: session.user.id },
+          orderBy: [{ isSelf: "desc" }, { order: "asc" }],
+        })
+      : Promise.resolve([]),
   ]);
 
-  // Времена — объединение всех «окошек» шаблона.
-  const times = [...new Set(template.map((t) => t.time))].sort();
-  const openByWeekday = new Map<number, Set<string>>();
-  for (const t of template) {
-    if (!openByWeekday.has(t.weekday)) openByWeekday.set(t.weekday, new Set());
-    openByWeekday.get(t.weekday)!.add(t.time);
+  const times = [...new Set(slots.map((s) => s.time))].sort();
+  const cells: Record<string, Cell> = {};
+  for (const s of slots) {
+    let state: CellState;
+    if (s.status === "closed") state = "closed";
+    else if (isPast(s.date, s.time)) state = "past";
+    else if (s.status === "booked") {
+      state = session?.user && s.bookedByUserId === session.user.id ? "mine" : "booked";
+    } else state = "free";
+    cells[`${s.date}|${s.time}`] = { id: s.id, state };
   }
-  const bookedMap = new Map(booked.map((b) => [`${b.date}|${b.time}`, b]));
 
-  const states: Record<string, SlotState> = {};
-  for (const d of days) {
-    for (const t of times) {
-      const k = `${d.key}|${t}`;
-      if (!openByWeekday.get(d.weekday)?.has(t)) {
-        states[k] = "none";
-      } else if (isPast(d.key, t)) {
-        states[k] = "past";
-      } else {
-        const b = bookedMap.get(k);
-        if (!b) states[k] = "free";
-        else if (session?.user && b.bookedByUserId === session.user.id) states[k] = "mine";
-        else states[k] = "booked";
-      }
-    }
-  }
+  const link = (w: number) => `/schedule?week=${w}&teacher=${activeTeacher.id}`;
 
   return (
     <div className="page">
@@ -67,28 +83,46 @@ export default async function SchedulePage({
             Выбери <span className="hl">слот</span> — <span className="ital">и готово</span>
           </h1>
           <p className="muted" style={{ fontSize: 18, marginTop: 14, maxWidth: "34em" }}>
-            Свободные окошки на ближайшие недели. Нажми на жёлтое — забронируем за тобой. Перенести можно в личном кабинете.
+            Свободные окошки педагогов. Нажми на жёлтое — забронируем за тобой, занятие сразу появится в личном кабинете.
           </p>
         </div>
       </div>
 
       <div className="wrap section--tight">
+        {/* выбор преподавателя */}
+        {teachers.length > 1 && (
+          <div style={{ marginBottom: 20 }}>
+            <span className="upper muted" style={{ display: "block", marginBottom: 8 }}>Преподаватель</span>
+            <div className="bk__chips">
+              {teachers.map((t) => (
+                <Link
+                  key={t.id}
+                  href={`/schedule?week=${offset}&teacher=${t.id}`}
+                  className="chip"
+                  data-on={t.id === activeTeacher.id}
+                  style={{ textDecoration: "none" }}
+                >
+                  {t.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* навигация по неделям */}
         <div className="row between center gap12" style={{ flexWrap: "wrap", marginBottom: 18 }}>
           <div className="row gap8 center">
             {offset > 0 ? (
-              <Link className="btn btn--ghost btn--sm" href={`/schedule?week=${offset - 1}`}>← Раньше</Link>
+              <Link className="btn btn--ghost btn--sm" href={link(offset - 1)}>← Раньше</Link>
             ) : (
               <button className="btn btn--ghost btn--sm" disabled>← Раньше</button>
             )}
             {offset < MAX_WEEKS_AHEAD ? (
-              <Link className="btn btn--ghost btn--sm" href={`/schedule?week=${offset + 1}`}>Позже →</Link>
+              <Link className="btn btn--ghost btn--sm" href={link(offset + 1)}>Позже →</Link>
             ) : (
               <button className="btn btn--ghost btn--sm" disabled>Позже →</button>
             )}
-            {offset !== 0 && (
-              <Link className="btn btn--sm" href="/schedule">Эта неделя</Link>
-            )}
+            {offset !== 0 && <Link className="btn btn--sm" href={link(0)}>Эта неделя</Link>}
           </div>
           <div className="hand" style={{ fontSize: 22 }}>
             {offset === 0 ? "эта неделя · " : ""}{weekLabel(monday)}
@@ -101,7 +135,24 @@ export default async function SchedulePage({
           <span><i className="dotmine"></i> твоё занятие</span>
         </div>
 
-        <ScheduleGrid days={days} times={times} states={states} isAuthed={!!session?.user} />
+        {times.length === 0 ? (
+          <div className="card" style={{ padding: "28px 30px" }}>
+            <p style={{ margin: 0, fontSize: 17 }}>
+              На эту неделю у преподавателя {activeTeacher.name} расписание ещё не открыто.
+            </p>
+            <p className="muted" style={{ margin: "8px 0 0", fontSize: 15 }}>
+              Посмотрите другую неделю или оставьте заявку — подберём время.
+            </p>
+          </div>
+        ) : (
+          <ScheduleGrid
+            days={days}
+            times={times}
+            cells={cells}
+            members={members.map((m) => ({ id: m.id, name: m.name, relation: m.relation, isSelf: m.isSelf }))}
+            isAuthed={!!session?.user}
+          />
+        )}
       </div>
     </div>
   );

@@ -68,10 +68,10 @@ async function main() {
   await prisma.package.deleteMany();
   await prisma.package.createMany({
     data: [
-      { name: "Проба пера", price: "0 ₽", priceAmount: 0, per: "пробное", popular: false, accent: false, feats: J(["Знакомство 40 минут", "Определяем уровень", "План по твоей цели"]), cta: "Записаться бесплатно", note: "Это бесплатно. Серьёзно.", isTrial: true, order: 0 },
-      { name: "Разогрев", price: "6 400 ₽", priceAmount: 6400, per: "4 занятия / мес", popular: false, accent: false, feats: J(["1 занятие в неделю", "Материалы в кабинете", "Домашка с проверкой"]), cta: "Выбрать пакет", note: "1 600 ₽ / занятие", order: 1 },
-      { name: "В потоке", price: "11 200 ₽", priceAmount: 11200, per: "8 занятий / мес", popular: true, accent: true, feats: J(["2 занятия в неделю", "Личный журнал прогресса", "Чат с преподавателем 24/7", "Доступ к библиотеке"]), cta: "Выбрать пакет", note: "1 400 ₽ / занятие · −12%", order: 2 },
-      { name: "Интенсив", price: "19 800 ₽", priceAmount: 19800, per: "16 занятий / мес", popular: false, accent: false, feats: J(["4 занятия в неделю", "Всё из «В потоке»", "Разбор речи на видео", "Цель за 2 месяца"]), cta: "Выбрать пакет", note: "1 238 ₽ / занятие · −23%", order: 3 },
+      { name: "Проба пера", price: "0 ₽", priceAmount: 0, lessonsCount: 1, per: "пробное", popular: false, accent: false, feats: J(["Знакомство 40 минут", "Определяем уровень", "План по твоей цели"]), cta: "Записаться бесплатно", note: "Это бесплатно. Серьёзно.", isTrial: true, order: 0 },
+      { name: "Разогрев", price: "6 400 ₽", priceAmount: 6400, lessonsCount: 4, per: "4 занятия / мес", popular: false, accent: false, feats: J(["1 занятие в неделю", "Материалы в кабинете", "Домашка с проверкой"]), cta: "Выбрать пакет", note: "1 600 ₽ / занятие", order: 1 },
+      { name: "В потоке", price: "11 200 ₽", priceAmount: 11200, lessonsCount: 8, per: "8 занятий / мес", popular: true, accent: true, feats: J(["2 занятия в неделю", "Личный журнал прогресса", "Чат с преподавателем 24/7", "Доступ к библиотеке"]), cta: "Выбрать пакет", note: "1 400 ₽ / занятие · −12%", order: 2 },
+      { name: "Интенсив", price: "19 800 ₽", priceAmount: 19800, lessonsCount: 16, per: "16 занятий / мес", popular: false, accent: false, feats: J(["4 занятия в неделю", "Всё из «В потоке»", "Разбор речи на видео", "Цель за 2 месяца"]), cta: "Выбрать пакет", note: "1 238 ₽ / занятие · −23%", order: 3 },
     ],
   });
 
@@ -89,9 +89,9 @@ async function main() {
   await prisma.teamMember.deleteMany();
   await prisma.teamMember.createMany({
     data: [
-      { name: "Павел", role: "Английский · основатель", tags: J(["Разговорный", "ЕГЭ", "Бизнес"]), note: "Победитель конкурса «Педагоги года Москвы 2026». Сам и есть тот самый человек со стен этого сайта.", photoUrl: "/uploads/pavel.jpg", hero: true, order: 0 },
-      { name: "Мария", role: "Английский для детей", tags: J(["Дети", "Игровой формат"]), note: "Превращает урок в приключение. Дети просят «ещё одно занятие».", hero: false, order: 1 },
-      { name: "Денис", role: "Подготовка к экзаменам", tags: J(["IELTS", "TOEFL", "ОГЭ"]), note: "Знает каждую ловушку экзамена в лицо. Средний балл учеников — 7.5+.", hero: false, order: 2 },
+      { name: "Павел", role: "Английский · основатель", tags: J(["Разговорный", "ЕГЭ", "Бизнес"]), note: "Победитель конкурса «Педагоги года Москвы 2026». Сам и есть тот самый человек со стен этого сайта.", photoUrl: "/uploads/pavel.jpg", hero: true, takesBookings: true, order: 0 },
+      { name: "Мария", role: "Английский для детей", tags: J(["Дети", "Игровой формат"]), note: "Превращает урок в приключение. Дети просят «ещё одно занятие».", hero: false, takesBookings: true, order: 1 },
+      { name: "Денис", role: "Подготовка к экзаменам", tags: J(["IELTS", "TOEFL", "ОГЭ"]), note: "Знает каждую ловушку экзамена в лицо. Средний балл учеников — 7.5+.", hero: false, takesBookings: true, order: 2 },
       { name: "Аня", role: "Разговорная практика", tags: J(["Speaking", "Произношение"]), note: "Ставит произношение и снимает барьер. С ней не страшно ошибаться.", hero: false, order: 3 },
     ],
   });
@@ -204,12 +204,27 @@ async function main() {
     },
   });
 
+  // Кто занимается на аккаунте: сама Анна и её сын.
+  await prisma.familyMember.deleteMany({ where: { userId: anna.id } });
+  const annaSelf = await prisma.familyMember.create({
+    data: { userId: anna.id, name: "Анна", relation: "Сам", isSelf: true, order: 0 },
+  });
+  await prisma.familyMember.create({
+    data: {
+      userId: anna.id,
+      name: "Миша",
+      relation: "Сын",
+      note: "9 лет, второй год занимается, любит игровой формат",
+      order: 1,
+    },
+  });
+
   await prisma.lesson.deleteMany({ where: { userId: anna.id } });
   await prisma.lesson.createMany({
     data: [
-      { userId: anna.id, dateLabel: "Сегодня", time: "19:00", topic: "Past Simple vs Present Perfect", status: "soon", order: 0 },
-      { userId: anna.id, dateLabel: "Чт, 5 июня", time: "19:00", topic: "Small talk: погода, выходные, планы", status: "plan", order: 1 },
-      { userId: anna.id, dateLabel: "Пн, 9 июня", time: "19:00", topic: "Phrasal verbs: get / take / put", status: "plan", order: 2 },
+      { userId: anna.id, memberId: annaSelf.id, dateLabel: "Сегодня", time: "19:00", topic: "Past Simple vs Present Perfect", status: "soon", order: 0 },
+      { userId: anna.id, memberId: annaSelf.id, dateLabel: "Чт, 5 июня", time: "19:00", topic: "Small talk: погода, выходные, планы", status: "plan", order: 1 },
+      { userId: anna.id, memberId: annaSelf.id, dateLabel: "Пн, 9 июня", time: "19:00", topic: "Phrasal verbs: get / take / put", status: "plan", order: 2 },
     ],
   });
 
@@ -240,20 +255,36 @@ async function main() {
     ],
   });
 
-  // ── Шаблон рабочей недели для онлайн-записи ──
-  // Сетка на любую неделю строится из этого шаблона, поэтому даты
-  // всегда актуальные и ничего не нужно перегенерировать вручную.
+  // Купленный пакет Анны: 8 занятий, 3 уже проведено.
+  await prisma.packagePurchase.deleteMany({ where: { userId: anna.id } });
+  await prisma.packagePurchase.create({
+    data: {
+      userId: anna.id,
+      packageName: "В потоке",
+      lessonsTotal: 8,
+      lessonsUsed: 3,
+      note: "Оплата за июнь",
+    },
+  });
+
+  // ── Стандартное расписание преподавателей ──
+  // Это шаблон: админ по нему раскатывает слоты на выбранный период.
   const times = ["09:00", "10:30", "12:00", "14:00", "16:00", "17:30", "19:00", "20:30"];
+  await prisma.scheduleSlot.deleteMany();
   await prisma.workingSlot.deleteMany();
-  for (let weekday = 1; weekday <= 6; weekday++) {
-    // Пн–Пт — все окошки, Сб — только до обеда, Вс — выходной.
-    const dayTimes = weekday === 6 ? times.slice(0, 4) : times;
-    for (const time of dayTimes) {
-      await prisma.workingSlot.create({ data: { weekday, time, enabled: true } });
+
+  const teachers = await prisma.teamMember.findMany({ where: { takesBookings: true } });
+  for (const teacher of teachers) {
+    for (let weekday = 1; weekday <= 6; weekday++) {
+      // Пн–Пт — все окошки, Сб — только до обеда, Вс — выходной.
+      const dayTimes = weekday === 6 ? times.slice(0, 4) : times;
+      for (const time of dayTimes) {
+        await prisma.workingSlot.create({
+          data: { teacherId: teacher.id, weekday, time, enabled: true },
+        });
+      }
     }
   }
-  // Старые брони (если были) больше не актуальны — схема дат изменилась.
-  await prisma.scheduleSlot.deleteMany();
 
   console.log("✓ Сид завершён");
 }

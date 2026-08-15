@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { createPayment, yookassaConfigured } from "@/lib/yookassa";
+import { createPurchaseForPayment } from "@/lib/packages";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
       where: { id: session.user.id },
       data: { packageName },
     });
+    await createPurchaseForPayment(payment.id);
     return NextResponse.json({ confirmationUrl: returnUrl, demo: true });
   }
 

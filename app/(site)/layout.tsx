@@ -3,6 +3,7 @@ import { Footer } from "@/components/site/Footer";
 import { SiteModalsProvider } from "@/components/site/SiteModals";
 import { auth } from "@/lib/auth";
 import { getSettings } from "@/lib/content";
+import { shortName } from "@/lib/name";
 
 export default async function SiteLayout({
   children,
@@ -13,7 +14,10 @@ export default async function SiteLayout({
 
   return (
     <SiteModalsProvider isAuthed={!!session?.user}>
-      <Nav logoUrl={settings.logoUrl} />
+      <Nav
+        logoUrl={settings.logoUrl}
+        userLabel={session?.user ? shortName(session.user.name, session.user.email) : null}
+      />
       {children}
       <Footer settings={settings} />
     </SiteModalsProvider>

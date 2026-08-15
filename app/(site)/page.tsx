@@ -19,7 +19,8 @@ function SectionHead({ kicker, title, right, id }: { kicker: string; title: Reac
 }
 
 export default async function HomePage() {
-  const { settings, benefits, lessons, packages, promos, team, reviews, faq } = await getLandingData();
+  // promos сейчас не рендерятся — блок акций скрыт (см. ниже).
+  const { settings, benefits, lessons, packages, team, reviews, faq } = await getLandingData();
   const awards = parseList(settings.awards);
   const aboutBody = parseList(settings.aboutBody);
 
@@ -191,17 +192,9 @@ export default async function HomePage() {
             right={<p className="muted" style={{ maxWidth: "20em", margin: 0, fontSize: 16 }}>Чем больше занятий — тем дешевле каждое. Никаких скрытых платежей и «звёздочек».</p>}
           />
 
-          <div className="promos">
-            {promos.map((p) => (
-              <div className="promo" key={p.id}>
-                <div className="promo__big display">{p.big}</div>
-                <div>
-                  <div className="promo__t">{p.title}</div>
-                  <div className="promo__d">{p.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Блок акций временно скрыт по просьбе заказчика.
+              Данные и раздел «Акции» в админке сохранены — чтобы вернуть,
+              достаточно снова отрендерить promos здесь. */}
 
           <div className="pgrid">
             {packages.map((p) => {

@@ -5,7 +5,12 @@ import { useSiteModals } from "./SiteModals";
 import type { PayTarget } from "./Payment";
 import { logoutAction } from "@/lib/actions/auth";
 
-type Lesson = { id: string; time: string; dateLabel: string; topic: string; status: string };
+type Lesson = {
+  id: string; time: string; dateLabel: string; topic: string; status: string;
+  memberName?: string | null; teacherName?: string | null;
+};
+type Balance = { id: string; packageName: string; total: number; used: number; left: number };
+type Member = { id: string; name: string; relation: string; note?: string | null; isSelf: boolean };
 type Journal = { id: string; mark: string; topic: string; date: string; note: string };
 type Mat = { id: string; tag: string; title: string; size: string; fileUrl: string | null };
 type Pay = { id: string; period: string; amount: number; status: string; packageName: string };
@@ -28,6 +33,8 @@ export function CabinetDashboard({
   materials,
   payments,
   payTarget,
+  balances,
+  members,
   stats,
   paidBanner,
 }: {
@@ -38,7 +45,9 @@ export function CabinetDashboard({
   materials: Mat[];
   payments: Pay[];
   payTarget: PayTarget | null;
-  stats: { journal: number; upcoming: number; lastMark: string; paid: number };
+  balances: Balance[];
+  members: Member[];
+  stats: { journal: number; upcoming: number; lastMark: string; left: number };
   paidBanner: boolean;
 }) {
   const [tab, setTab] = useState("home");
@@ -108,11 +117,35 @@ export function CabinetDashboard({
                 )}
               </div>
 
+              {members.filter((m) => !m.isSelf).length > 0 && (
+                <div className="card" style={{ padding: "20px 24px" }}>
+                  <span className="tag tag--ink">Кто занимается</span>
+                  <div className="cab__list" style={{ marginTop: 14, gap: 8 }}>
+                    {members.map((m) => (
+                      <div className="row between center" key={m.id} style={{ gap: 12, flexWrap: "wrap" }}>
+                        <div>
+                          <b>{m.name}</b>{" "}
+                          <span className="muted" style={{ fontSize: 14 }}>
+                            {m.isSelf ? "· я" : `· ${m.relation}`}
+                          </span>
+                          {m.note && (
+                            <><br /><span className="muted" style={{ fontSize: 13 }}>{m.note}</span></>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="muted" style={{ fontSize: 13, margin: "12px 0 0" }}>
+                    При записи можно выбрать, для кого занятие. Список ведёт преподаватель.
+                  </p>
+                </div>
+              )}
+
               <div className="cab__streak card">
                 <div><div className="display" style={{ fontSize: 40 }}>{stats.journal}</div><span className="muted">занятий в журнале</span></div>
                 <div><div className="display" style={{ fontSize: 40 }}>{stats.upcoming}</div><span className="muted">занятий впереди</span></div>
                 <div><div className="display" style={{ fontSize: 40 }}>{stats.lastMark}</div><span className="muted">последняя оценка</span></div>
-                <div><div className="display" style={{ fontSize: 40 }}>{stats.paid}</div><span className="muted">оплат прошло</span></div>
+                <div><div className="display" style={{ fontSize: 40 }}>{stats.left}</div><span className="muted">занятий осталось</span></div>
               </div>
             </>
           )}
@@ -125,8 +158,19 @@ export function CabinetDashboard({
                 {lessons.map((l) => (
                   <div className={"cab__row card" + (l.status === "soon" ? " hot" : "")} key={l.id}>
                     <div className="cab__rowtime"><b>{l.time}</b><span className="muted">{l.dateLabel}</span></div>
-                    <div className="grow"><b>{l.topic}</b></div>
-                    {l.status === "soon" ? (
+                    <div className="grow">
+                      <b>{l.topic}</b>
+                      {(l.memberName || l.teacherName) && (
+                        <><br /><span className="muted" style={{ fontSize: 13 }}>
+                          {l.memberName ? `занимается ${l.memberName}` : ""}
+                          {l.memberName && l.teacherName ? " · " : ""}
+                          {l.teacherName ? `педагог ${l.teacherName}` : ""}
+                        </span></>
+                      )}
+                    </div>
+                    {l.status === "done" ? (
+                      <span className="tag" style={{ background: "var(--paper-2)" }}>✓ проведено</span>
+                    ) : l.status === "soon" ? (
                       <button className="btn btn--accent btn--sm">Подключиться</button>
                     ) : (
                       <button className="btn btn--ghost btn--sm">Перенести</button>
@@ -181,6 +225,27 @@ export function CabinetDashboard({
           {tab === "pay" && (
             <>
               <h2 className="display" style={{ fontSize: 40 }}>Оплата</h2>
+
+              {balances.length > 0 && (
+                <>
+                  <h3 style={{ marginTop: 8, marginBottom: 10 }}>Занятия по пакетам</h3>
+                  <div className="cab__list" style={{ marginBottom: 22 }}>
+                    {balances.map((b) => (
+                      <div className="cab__row card" key={b.id}>
+                        <div className="cab__mark" style={{ background: b.left > 0 ? "var(--accent)" : "var(--paper-2)" }}>
+                          {b.left}
+                        </div>
+                        <div className="grow">
+                          <b>Пакет «{b.packageName}»</b><br />
+                          <span className="muted" style={{ fontSize: 14 }}>
+                            осталось {b.left} из {b.total} · проведено {b.used}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
               {payTarget && (
                 <div className="cab__remind card card--shadow" style={{ borderColor: "var(--ink)" }}>
                   <div className="row between center" style={{ flexWrap: "wrap", gap: 14 }}>

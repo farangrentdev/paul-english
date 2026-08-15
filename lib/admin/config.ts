@@ -47,6 +47,7 @@ export const ENTITIES: Record<string, Entity> = {
       { name: "note", label: "Описание", type: "textarea" },
       { name: "photoUrl", label: "Фото", type: "image", optional: true },
       { name: "hero", label: "Это основатель (большая карточка)", type: "checkbox" },
+      { name: "takesBookings", label: "Участвует в онлайн-записи (своё расписание)", type: "checkbox" },
       orderField,
     ],
   },
@@ -63,7 +64,8 @@ export const ENTITIES: Record<string, Entity> = {
     fields: [
       { name: "name", label: "Название", type: "text" },
       { name: "price", label: "Цена (текст, напр. «11 200 ₽»)", type: "text" },
-      { name: "priceAmount", label: "Сумma для оплаты, ₽ (0 = бесплатно)", type: "number" },
+      { name: "priceAmount", label: "Сумма для оплаты, ₽ (0 = бесплатно)", type: "number" },
+      { name: "lessonsCount", label: "Занятий в пакете", type: "number", help: "Столько занятий начислится ученику после оплаты" },
       { name: "per", label: "Период (напр. «8 занятий / мес»)", type: "text" },
       { name: "feats", label: "Что входит", type: "list", help: "По одному пункту в строке" },
       { name: "cta", label: "Текст кнопки", type: "text" },

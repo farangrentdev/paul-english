@@ -57,6 +57,7 @@ model Package {
   name        String
   price       String  // отображаемая строка, напр. "11 200 ₽"
   priceAmount Int     @default(0) // сумма в рублях для оплаты (0 = бесплатно/проба)
+  lessonsCount Int    @default(0) // сколько занятий даёт пакет (для учёта остатка)
   per         String
   popular     Boolean @default(false)
   accent      Boolean @default(false)
@@ -83,7 +84,13 @@ model TeamMember {
   note     String
   photoUrl String?
   hero     Boolean @default(false)
+  // Участвует в онлайн-записи: у такого педагога есть своё расписание.
+  takesBookings Boolean @default(false)
   order    Int     @default(0)
+
+  workingSlots WorkingSlot[]
+  slots        ScheduleSlot[]
+  lessons      Lesson[]
 }
 
 model Review {
@@ -139,6 +146,40 @@ model User {
   materials StudentMaterial[]
   payments  Payment[]
   slots     ScheduleSlot[]
+  family    FamilyMember[]
+  purchases PackagePurchase[]
+}
+
+// Кто именно занимается на аккаунте: сам владелец и/или его дети, близкие.
+// Аккаунт и оплата — общие, эти записи справочные: педагог знает, с кем урок.
+model FamilyMember {
+  id       String  @id @default(cuid())
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  name     String
+  relation String  @default("Сам") // Сам | Сын | Дочь | Супруг(а) | Другое
+  note     String? // возраст, уровень, особенности — что важно педагогу
+  isSelf   Boolean @default(false)
+  order    Int     @default(0)
+
+  lessons Lesson[]
+  slots   ScheduleSlot[]
+}
+
+// Купленный пакет: сколько занятий даёт и сколько уже израсходовано.
+model PackagePurchase {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  packageName  String
+  lessonsTotal Int
+  lessonsUsed  Int      @default(0)
+  note         String?
+  createdAt    DateTime @default(now())
+  payment      Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  paymentId    String?  @unique
+
+  lessons Lesson[]
 }
 
 model Lead {
@@ -159,10 +200,24 @@ model Lesson {
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId   String
   dateLabel String
+  date     String? // "2026-08-17" — есть у занятий, созданных из записи
   time     String
   topic    String
-  status   String @default("plan") // soon | plan | done
+  status   String @default("plan") // soon | plan | done | canceled
   order    Int    @default(0)
+
+  // Кто ведёт и кто занимается
+  teacher   TeamMember? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  teacherId Int?
+  member    FamilyMember? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  memberId  String?
+
+  // Из какого пакета списывается (списание происходит при статусе done)
+  purchase   PackagePurchase? @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  purchaseId String?
+  countedAt  DateTime? // когда занятие фактически списали — защита от двойного списания
+
+  slot ScheduleSlot?
 }
 
 model JournalEntry {
@@ -198,28 +253,42 @@ model Payment {
   yookassaId  String?   @unique
   createdAt   DateTime  @default(now())
   paidAt      DateTime?
+
+  purchase PackagePurchase?
 }
 
-// Шаблон рабочей недели: какие «окошки» в принципе открыты для записи.
-// Сетка на любую неделю строится из него — ничего генерировать заранее не нужно.
+// Стандартное расписание преподавателя: какие окошки он в принципе ведёт.
+// По нему админ «раскатывает» слоты на выбранный период.
 model WorkingSlot {
-  id      Int     @id @default(autoincrement())
-  weekday Int // 1=Пн … 7=Вс (ISO)
-  time    String // "19:00"
-  enabled Boolean @default(true)
+  id        Int        @id @default(autoincrement())
+  teacher   TeamMember @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId Int
+  weekday   Int // 1=Пн … 7=Вс (ISO)
+  time      String // "19:00"
+  enabled   Boolean    @default(true)
 
-  @@unique([weekday, time])
+  @@unique([teacherId, weekday, time])
 }
 
-// Конкретные брони и разовые блокировки на дату. Перекрывают шаблон.
+// Конкретный слот на дату у конкретного преподавателя.
+// Создаётся админом (раскаткой периода), затем бронируется учеником.
 model ScheduleSlot {
-  id             String  @id @default(cuid())
-  date           String // "2026-08-17" (YYYY-MM-DD, без TZ-сюрпризов)
-  time           String // "19:00"
-  status         String  @default("booked") // booked | blocked
-  bookedBy       User?   @relation(fields: [bookedByUserId], references: [id], onDelete: SetNull)
-  bookedByUserId String?
-  createdAt      DateTime @default(now())
+  id        String     @id @default(cuid())
+  teacher   TeamMember @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId Int
+  date      String // "2026-08-17" (YYYY-MM-DD, без TZ-сюрпризов)
+  time      String // "19:00"
+  status    String     @default("open") // open | booked | closed
 
-  @@unique([date, time])
+  bookedBy       User?         @relation(fields: [bookedByUserId], references: [id], onDelete: SetNull)
+  bookedByUserId String?
+  member         FamilyMember? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  memberId       String?
+  lesson         Lesson?       @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  lessonId       String?       @unique
+
+  createdAt DateTime @default(now())
+
+  @@unique([teacherId, date, time])
+  @@index([date])
 }

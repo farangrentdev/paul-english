@@ -10,7 +10,7 @@ export function AdminLoginForm() {
 
   return (
     <form className="cab-login__card card card--shadow" action={formAction}>
-      <span className="tag tag--ink">Админка · Pavel English</span>
+      <span className="tag tag--ink">Админка · Paul English</span>
       <h1 className="display" style={{ fontSize: 40, lineHeight: 0.95, margin: "14px 0 6px" }}>Вход для администратора</h1>
       <p className="muted" style={{ marginBottom: 22 }}>Управление контентом, заявками, учениками и платежами.</p>
 

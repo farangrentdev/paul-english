@@ -33,7 +33,7 @@ export function AdminNav({ newLeads }: { newLeads: number }) {
   return (
     <aside className="admin__side">
       <Link className="admin__brand" href="/admin">
-        <b className="serif">Pavel</b>
+        <b className="serif">Paul</b>
         <span className="hand" style={{ fontSize: 16, color: "var(--ink-soft)" }}>admin</span>
       </Link>
 

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { AdminLoginForm } from "@/components/admin/AdminLoginForm";
 
-export const metadata = { title: "Вход — админка Pavel English" };
+export const metadata = { title: "Вход — админка Paul English" };
 
 export default async function AdminLoginPage() {
   const session = await auth();

@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { AdminNav } from "@/components/admin/AdminNav";
 
-export const metadata = { title: "Админка — Pavel English" };
+export const metadata = { title: "Админка — Paul English" };
 
 export default async function AdminLayout({
   children,

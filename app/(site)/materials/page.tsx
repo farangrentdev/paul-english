@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Spark } from "@/components/site/doodles";
 
-export const metadata = { title: "Материалы — Pavel English" };
+export const metadata = { title: "Материалы — Paul English" };
 
 export default async function MaterialsPage() {
   const materials = await prisma.material.findMany({

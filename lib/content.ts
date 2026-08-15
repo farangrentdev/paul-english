@@ -6,11 +6,13 @@ export async function getSettings() {
   // дефолт, если строка ещё не засеяна
   return {
     id: 1,
+    logoUrl: null as string | null,
     teacherName: "Павел",
     teacherRole: "Преподаватель английского · автор методики",
     tagline: "Английский, который наконец-то заговорит",
     awards: "[]",
     heroPhotoUrl: "/uploads/pavel.jpg",
+    heroBadge: "",
     aboutLead: "",
     aboutBody: "[]",
     reviewsScore: "4.9",
@@ -19,7 +21,7 @@ export async function getSettings() {
     phone: "+7 (000) 000-00-00",
     telegram: "@pavelenglish",
     socials: "[]",
-    footerLegal: "© 2026 Pavel English",
+    footerLegal: "© 2026 Paul English",
     updatedAt: new Date(),
   };
 }

@@ -4,7 +4,7 @@ import { CabinetLogin } from "@/components/site/CabinetLogin";
 import { CabinetDashboard } from "@/components/site/CabinetDashboard";
 import type { PayTarget } from "@/components/site/Payment";
 
-export const metadata = { title: "Личный кабинет — Pavel English" };
+export const metadata = { title: "Личный кабинет — Paul English" };
 
 export default async function CabinetPage({
   searchParams,

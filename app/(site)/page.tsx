@@ -82,9 +82,18 @@ export default async function HomePage() {
             <div className="hero__frame card">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={settings.heroPhotoUrl} alt={`${settings.teacherName}, преподаватель английского`} className="bw" />
-              <div className="hero__badge" style={{ margin: "0px 14px 0px 0px" }}>
-                <span className="hand" style={{ fontSize: 30, lineHeight: 0.9 }}>«Учитель<br />года» ×4</span>
-              </div>
+              {settings.heroBadge.trim() && (
+                <div className="hero__badge" style={{ margin: "0px 14px 0px 0px" }}>
+                  <span className="hand" style={{ fontSize: 30, lineHeight: 0.9 }}>
+                    {settings.heroBadge.split("\n").map((line, i, all) => (
+                      <span key={i}>
+                        {line}
+                        {i < all.length - 1 && <br />}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="hand hero__note hero__note--2" style={{ color: "rgb(245, 243, 236)" }}>

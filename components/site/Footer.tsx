@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { parsePairs } from "@/lib/json";
+import { Logo } from "./Logo";
 
 type Settings = {
+  logoUrl?: string | null;
   email: string;
   phone: string;
   telegram: string;
@@ -19,9 +21,7 @@ export function Footer({ settings }: { settings: Settings }) {
         <div className="foot__top">
           <div className="foot__brand">
             <div className="nav__logo" style={{ marginBottom: 14 }}>
-              <b>Pavel</b>
-              <span className="dot"></span>
-              <b className="serif ital" style={{ fontSize: 24 }}>English</b>
+              <Logo logoUrl={settings.logoUrl} size={24} />
             </div>
             <p className="muted" style={{ maxWidth: "24em" }}>
               Частная практика английского языка. Дети и взрослые, онлайн по всему миру и офлайн по договорённости.

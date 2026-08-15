@@ -199,11 +199,13 @@ export function getEntity(key: string): Entity | null {
 
 // Поля singleton-настроек сайта (модель SiteSettings, id=1).
 export const SETTINGS_FIELDS: Field[] = [
+  { name: "logoUrl", label: "Логотип", type: "image", optional: true, help: "PNG/SVG с прозрачным фоном. Если не загружен — показывается текстовый «Paul · English»" },
   { name: "teacherName", label: "Имя преподавателя", type: "text" },
   { name: "teacherRole", label: "Роль / подпись", type: "text" },
   { name: "tagline", label: "Слоган (заголовок hero)", type: "text" },
   { name: "awards", label: "Регалии (hero)", type: "list", help: "По одной в строке" },
   { name: "heroPhotoUrl", label: "Фото (hero / about)", type: "image", optional: true },
+  { name: "heroBadge", label: "Бейдж на фото", type: "textarea", help: "Жёлтый круг на фото. Перенос строки = новая строка. Пусто — бейдж скрыт" },
   { name: "aboutLead", label: "«Обо мне» — лид", type: "textarea" },
   { name: "aboutBody", label: "«Обо мне» — абзацы", type: "list", help: "Каждый абзац с новой строки" },
   { name: "reviewsScore", label: "Рейтинг (напр. «4.9»)", type: "text" },

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSiteModals } from "./SiteModals";
+import { Logo } from "./Logo";
 
 const LINKS: [string, string][] = [
   ["about", "Обо мне"],
@@ -14,7 +15,7 @@ const LINKS: [string, string][] = [
   ["faq", "Q&A"],
 ];
 
-export function Nav() {
+export function Nav({ logoUrl }: { logoUrl?: string | null }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { openBook } = useSiteModals();
@@ -25,9 +26,7 @@ export function Nav() {
     <nav className="nav">
       <div className="wrap nav__bar">
         <Link className="nav__logo" href="/">
-          <b>Pavel</b>
-          <span className="dot"></span>
-          <b className="serif ital" style={{ fontSize: 26 }}>English</b>
+          <Logo logoUrl={logoUrl} size={26} />
         </Link>
 
         <div className="nav__links">

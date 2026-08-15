@@ -27,17 +27,54 @@ export async function deleteLead(id: string) {
   revalidatePath("/admin/leads");
 }
 
-// ── Расписание ──
-export async function toggleSlot(id: string) {
+// ── Расписание: шаблон рабочей недели ──
+export async function toggleWorkingSlot(weekday: number, time: string) {
   await assertAdmin();
-  const slot = await prisma.scheduleSlot.findUnique({ where: { id } });
-  if (!slot) return;
-  const free = slot.status !== "free";
-  await prisma.scheduleSlot.update({
-    where: { id },
-    data: { status: free ? "free" : "booked", bookedByUserId: free ? null : slot.bookedByUserId },
+  const existing = await prisma.workingSlot.findUnique({
+    where: { weekday_time: { weekday, time } },
   });
+  if (existing) {
+    await prisma.workingSlot.update({
+      where: { id: existing.id },
+      data: { enabled: !existing.enabled },
+    });
+  } else {
+    await prisma.workingSlot.create({ data: { weekday, time, enabled: true } });
+  }
   revalidatePath("/admin/schedule");
+  revalidatePath("/schedule");
+}
+
+/** Добавить новое время во все будни (Пн–Пт). */
+export async function addWorkingTime(formData: FormData) {
+  await assertAdmin();
+  const time = str(formData, "time");
+  if (!/^\d{2}:\d{2}$/.test(time)) return;
+  for (let weekday = 1; weekday <= 5; weekday++) {
+    await prisma.workingSlot.upsert({
+      where: { weekday_time: { weekday, time } },
+      update: { enabled: true },
+      create: { weekday, time, enabled: true },
+    });
+  }
+  revalidatePath("/admin/schedule");
+  revalidatePath("/schedule");
+}
+
+/** Полностью убрать время из расписания. */
+export async function removeWorkingTime(time: string) {
+  await assertAdmin();
+  await prisma.workingSlot.deleteMany({ where: { time } });
+  revalidatePath("/admin/schedule");
+  revalidatePath("/schedule");
+}
+
+/** Снять бронь (слот снова станет свободным). */
+export async function cancelBooking(id: string) {
+  await assertAdmin();
+  await prisma.scheduleSlot.delete({ where: { id } });
+  revalidatePath("/admin/schedule");
+  revalidatePath("/schedule");
 }
 
 // ── Ученики ──

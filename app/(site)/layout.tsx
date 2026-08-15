@@ -13,7 +13,7 @@ export default async function SiteLayout({
 
   return (
     <SiteModalsProvider isAuthed={!!session?.user}>
-      <Nav />
+      <Nav logoUrl={settings.logoUrl} />
       {children}
       <Footer settings={settings} />
     </SiteModalsProvider>

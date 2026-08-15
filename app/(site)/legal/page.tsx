@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { parseList } from "@/lib/json";
 import { LegalTabs } from "@/components/site/LegalTabs";
 
-export const metadata = { title: "Юридическая информация — Pavel English" };
+export const metadata = { title: "Юридическая информация — Paul English" };
 
 export default async function LegalPage() {
   const rows = await prisma.legalDoc.findMany({ orderBy: { order: "asc" } });

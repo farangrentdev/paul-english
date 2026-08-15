@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { CabinetLogin } from "@/components/site/CabinetLogin";
@@ -14,8 +15,27 @@ export default async function CabinetPage({
   const session = await auth();
   if (!session?.user) return <CabinetLogin />;
 
-  // Админа отправляем в админку (у него нет ученического профиля).
   const { paid } = await searchParams;
+
+  // У администратора нет ученического профиля — не показываем пустой кабинет.
+  if (session.user.role === "admin") {
+    return (
+      <div className="page cab-login">
+        <div className="cab-login__card card card--shadow">
+          <span className="tag tag--ink">Вы вошли как администратор</span>
+          <h1 className="display" style={{ fontSize: 38, lineHeight: 0.95, margin: "14px 0 6px" }}>
+            Это кабинет ученика
+          </h1>
+          <p className="muted" style={{ marginBottom: 20 }}>
+            У администратора нет расписания и журнала. Управление школой — в админке.
+          </p>
+          <Link className="btn btn--accent btn--lg" href="/admin" style={{ width: "100%", justifyContent: "center" }}>
+            Перейти в админку →
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const [user, lessons, journal, materials, payments] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),

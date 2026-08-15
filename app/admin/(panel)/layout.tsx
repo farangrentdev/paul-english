@@ -12,7 +12,8 @@ export default async function AdminLayout({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/admin/login");
-  if (session.user.role !== "admin") redirect("/cabinet");
+  // Вошли под учеником — не уводим молча в кабинет, а объясняем на странице входа.
+  if (session.user.role !== "admin") redirect("/admin/login?forbidden=1");
 
   const newLeads = await prisma.lead.count({ where: { status: "new" } });
 

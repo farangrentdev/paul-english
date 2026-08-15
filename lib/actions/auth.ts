@@ -42,3 +42,8 @@ export async function loginAction(
 export async function logoutAction() {
   await signOut({ redirectTo: "/" });
 }
+
+// Выход со страницы админки — возвращаем на её же форму входа.
+export async function logoutToAdminLogin() {
+  await signOut({ redirectTo: "/admin/login" });
+}

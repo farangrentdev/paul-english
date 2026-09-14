@@ -117,7 +117,9 @@
 }
 
 @media (max-width: 860px) {
-  .admin { grid-template-columns: 1fr; }
+  /* строки: шапка и меню по содержимому, контент занимает остаток —
+     иначе min-height:100vh растягивает шапку на пол-экрана */
+  .admin { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; }
 
   .admin__mobilebar {
     display: flex;

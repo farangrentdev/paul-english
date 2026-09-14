@@ -1,16 +1,37 @@
 // Тонкая обёртка над REST API ЮKassa (https://yookassa.ru/developers/api).
+// Ключи берутся из настроек в админке; если их там нет — из переменных окружения.
 import { randomUUID } from "crypto";
+import { prisma } from "@/lib/db";
+import { decryptSecret } from "@/lib/crypto";
 
 const API = "https://api.yookassa.ru/v3";
 
-export function yookassaConfigured(): boolean {
-  return !!process.env.YOOKASSA_SHOP_ID && !!process.env.YOOKASSA_SECRET_KEY;
+export type YooCredentials = { shopId: string; secretKey: string };
+
+/** Действующие реквизиты: сначала админка, затем .env. */
+export async function getCredentials(): Promise<YooCredentials | null> {
+  const settings = await prisma.paymentSettings.findUnique({ where: { id: 1 } });
+
+  if (settings?.enabled && settings.shopId) {
+    const secretKey = decryptSecret(settings.secretKeyEnc);
+    if (secretKey) return { shopId: settings.shopId, secretKey };
+  }
+
+  // Совместимость со старым способом настройки.
+  const envShop = process.env.YOOKASSA_SHOP_ID;
+  const envSecret = process.env.YOOKASSA_SECRET_KEY;
+  if (envShop && envSecret) return { shopId: envShop, secretKey: envSecret };
+
+  return null;
 }
 
-function authHeader(): string {
-  const token = Buffer.from(
-    `${process.env.YOOKASSA_SHOP_ID}:${process.env.YOOKASSA_SECRET_KEY}`
-  ).toString("base64");
+/** Настроен ли приём платежей. Без него оплата работает в демо-режиме. */
+export async function yookassaConfigured(): Promise<boolean> {
+  return (await getCredentials()) !== null;
+}
+
+function authHeader(creds: YooCredentials): string {
+  const token = Buffer.from(`${creds.shopId}:${creds.secretKey}`).toString("base64");
   return `Basic ${token}`;
 }
 
@@ -32,10 +53,13 @@ export async function createPayment(params: {
   returnUrl: string;
   metadata: Record<string, string>;
 }): Promise<YooPayment> {
+  const creds = await getCredentials();
+  if (!creds) throw new Error("ЮKassa не настроена");
+
   const res = await fetch(`${API}/payments`, {
     method: "POST",
     headers: {
-      Authorization: authHeader(),
+      Authorization: authHeader(creds),
       "Idempotence-Key": randomUUID(),
       "Content-Type": "application/json",
     },
@@ -64,8 +88,11 @@ export async function createPayment(params: {
 }
 
 export async function getPayment(id: string): Promise<YooPayment> {
+  const creds = await getCredentials();
+  if (!creds) throw new Error("ЮKassa не настроена");
+
   const res = await fetch(`${API}/payments/${id}`, {
-    headers: { Authorization: authHeader() },
+    headers: { Authorization: authHeader(creds) },
   });
   if (!res.ok) {
     const text = await res.text();
@@ -78,4 +105,24 @@ export async function getPayment(id: string): Promise<YooPayment> {
     paid: !!data.paid,
     metadata: data.metadata,
   };
+}
+
+/**
+ * Проверка реквизитов: запрашиваем список платежей.
+ * Успешный ответ означает, что shopId и ключ приняты ЮKassa.
+ */
+export async function verifyCredentials(
+  creds: YooCredentials
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const res = await fetch(`${API}/payments?limit=1`, {
+      headers: { Authorization: authHeader(creds) },
+    });
+    if (res.ok) return { ok: true };
+    if (res.status === 401) return { ok: false, error: "Неверный shopId или секретный ключ" };
+    const text = await res.text();
+    return { ok: false, error: `ЮKassa ответила ${res.status}: ${text.slice(0, 200)}` };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Нет связи с ЮKassa" };
+  }
 }

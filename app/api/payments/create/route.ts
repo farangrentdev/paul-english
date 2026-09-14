@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   });
 
   // Без ключей ЮKassa — режим демонстрации: сразу помечаем оплаченным.
-  if (!yookassaConfigured()) {
+  if (!(await yookassaConfigured())) {
     await prisma.payment.update({
       where: { id: payment.id },
       data: { status: "paid", paidAt: new Date() },

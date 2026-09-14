@@ -23,24 +23,26 @@ export default async function AdminPaymentsPage() {
         </div>
       </div>
 
-      <table className="atable">
-        <thead>
-          <tr><th>Ученик</th><th>Пакет</th><th>Сумма</th><th>Статус</th><th>Создан</th><th>Оплачен</th></tr>
-        </thead>
-        <tbody>
-          {payments.length === 0 && <tr><td colSpan={6} className="muted">Платежей пока нет</td></tr>}
-          {payments.map((p) => (
-            <tr key={p.id}>
-              <td><b>{p.user.name}</b><br /><span className="muted">{p.user.email}</span></td>
-              <td>{p.packageName} · {p.period}</td>
-              <td className="mono-num">{fmt(p.amount)}</td>
-              <td><span className={"badge" + (p.status === "paid" ? " badge--ok" : "")}>{STATUS[p.status] ?? p.status}</span></td>
-              <td className="muted">{new Date(p.createdAt).toLocaleDateString("ru-RU")}</td>
-              <td className="muted">{p.paidAt ? new Date(p.paidAt).toLocaleDateString("ru-RU") : "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="atable-wrap">
+        <table className="atable">
+          <thead>
+            <tr><th>Ученик</th><th>Пакет</th><th>Сумма</th><th>Статус</th><th>Создан</th><th>Оплачен</th></tr>
+          </thead>
+          <tbody>
+            {payments.length === 0 && <tr><td colSpan={6} className="muted">Платежей пока нет</td></tr>}
+            {payments.map((p) => (
+              <tr key={p.id}>
+                <td><b>{p.user.name}</b><br /><span className="muted">{p.user.email}</span></td>
+                <td>{p.packageName} · {p.period}</td>
+                <td className="mono-num">{fmt(p.amount)}</td>
+                <td><span className={"badge" + (p.status === "paid" ? " badge--ok" : "")}>{STATUS[p.status] ?? p.status}</span></td>
+                <td className="muted">{new Date(p.createdAt).toLocaleDateString("ru-RU")}</td>
+                <td className="muted">{p.paidAt ? new Date(p.paidAt).toLocaleDateString("ru-RU") : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

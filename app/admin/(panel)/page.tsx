@@ -42,40 +42,44 @@ export default async function AdminDashboard() {
       </div>
 
       <h2 className="serif" style={{ fontSize: 26, margin: "10px 0 12px" }}>Последние заявки</h2>
-      <table className="atable" style={{ marginBottom: 30 }}>
-        <thead>
-          <tr><th>Имя</th><th>Контакт</th><th>Цель</th><th>Статус</th></tr>
-        </thead>
-        <tbody>
-          {recentLeads.length === 0 && <tr><td colSpan={4} className="muted">Пока нет заявок</td></tr>}
-          {recentLeads.map((l) => (
-            <tr key={l.id}>
-              <td><b>{l.name}</b></td>
-              <td>{l.contactType}: {l.contactValue}</td>
-              <td className="muted">{l.level ?? "—"}</td>
-              <td><span className={"badge" + (l.status === "new" ? " badge--new" : "")}>{l.status}</span></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="atable-wrap">
+        <table className="atable" style={{ marginBottom: 30 }}>
+          <thead>
+            <tr><th>Имя</th><th>Контакт</th><th>Цель</th><th>Статус</th></tr>
+          </thead>
+          <tbody>
+            {recentLeads.length === 0 && <tr><td colSpan={4} className="muted">Пока нет заявок</td></tr>}
+            {recentLeads.map((l) => (
+              <tr key={l.id}>
+                <td><b>{l.name}</b></td>
+                <td>{l.contactType}: {l.contactValue}</td>
+                <td className="muted">{l.level ?? "—"}</td>
+                <td><span className={"badge" + (l.status === "new" ? " badge--new" : "")}>{l.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <h2 className="serif" style={{ fontSize: 26, margin: "10px 0 12px" }}>Последние платежи</h2>
-      <table className="atable">
-        <thead>
-          <tr><th>Ученик</th><th>Пакет</th><th>Сумма</th><th>Когда</th></tr>
-        </thead>
-        <tbody>
-          {recentPayments.length === 0 && <tr><td colSpan={4} className="muted">Пока нет платежей</td></tr>}
-          {recentPayments.map((p) => (
-            <tr key={p.id}>
-              <td><b>{p.user.name}</b></td>
-              <td>{p.packageName} · {p.period}</td>
-              <td className="mono-num">{fmt(p.amount)}</td>
-              <td className="muted">{p.paidAt ? new Date(p.paidAt).toLocaleDateString("ru-RU") : "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="atable-wrap">
+        <table className="atable">
+          <thead>
+            <tr><th>Ученик</th><th>Пакет</th><th>Сумма</th><th>Когда</th></tr>
+          </thead>
+          <tbody>
+            {recentPayments.length === 0 && <tr><td colSpan={4} className="muted">Пока нет платежей</td></tr>}
+            {recentPayments.map((p) => (
+              <tr key={p.id}>
+                <td><b>{p.user.name}</b></td>
+                <td>{p.packageName} · {p.period}</td>
+                <td className="mono-num">{fmt(p.amount)}</td>
+                <td className="muted">{p.paidAt ? new Date(p.paidAt).toLocaleDateString("ru-RU") : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

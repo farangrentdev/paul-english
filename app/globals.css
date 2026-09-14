@@ -102,10 +102,78 @@
 
 .flash { padding: 12px 16px; border: 1.5px solid var(--ink); border-radius: var(--r); background: var(--accent); margin-bottom: 18px; font-weight: 600; }
 
+/* мобильная шапка админки — видна только на узких экранах */
+.admin__mobilebar { display: none; }
+
+/* таблицы админки прокручиваются по горизонтали, а не ломают вёрстку */
+.atable-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 14px; }
+.atable-wrap .atable { margin-bottom: 0; }
+
+@media (max-width: 1024px) {
+  .admin__main { padding: 26px 22px 60px; }
+}
+
 @media (max-width: 860px) {
   .admin { grid-template-columns: 1fr; }
-  .admin__side { position: static; height: auto; flex-direction: row; flex-wrap: wrap; }
-  .admin__navtitle { width: 100%; }
+
+  .admin__mobilebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1.5px solid var(--ink);
+    background: var(--paper-2);
+    position: sticky;
+    top: 0;
+    z-index: 60;
+  }
+  .admin__mobilebar .admin__brand { margin-bottom: 0; }
+
+  /* меню скрыто, пока не нажали кнопку в шапке */
+  .admin__side {
+    display: none;
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1.5px solid var(--ink);
+    padding: 14px 16px 18px;
+  }
+  .admin__side.open { display: flex; }
+  /* логотип дублируется в мобильной шапке */
+  .admin__side > .admin__brand { display: none; }
+
+  .admin__navtitle { width: 100%; margin-top: 10px; }
+  .admin__navi { padding: 11px 12px; font-size: 15.5px; }
+
+  .admin__main { padding: 20px 16px 50px; }
+  .admin__head h1 { font-size: 34px; }
+  .admin__head { gap: 12px; margin-bottom: 18px; }
+
+  /* формы — в одну колонку */
+  .aform .row2 { grid-template-columns: 1fr; }
+  .aform { max-width: none; }
+  .aform__actions { flex-wrap: wrap; }
+  .aform__actions .btn { flex: 1 1 auto; justify-content: center; }
+
+  /* таблицы: компактнее; широкие оборачиваются в .atable-wrap со скроллом */
+  .atable th, .atable td { padding: 10px 10px; font-size: 14px; }
+  .atable td.actions { text-align: left; white-space: normal; }
+  .atable-wrap .atable { min-width: 560px; }
+
+  .adash { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+  .adash__card { padding: 16px 18px; }
+  .adash__num { font-size: 36px; }
+}
+
+@media (max-width: 560px) {
+  .admin__main { padding: 16px 12px 44px; }
+  .admin__head h1 { font-size: 28px; }
+  .adash { grid-template-columns: 1fr 1fr; }
+  .adash__num { font-size: 30px; }
+  .flash { padding: 10px 12px; font-size: 14px; }
+  /* кнопки в формах занимают всю ширину — удобнее пальцем */
+  .aform__actions .btn { width: 100%; }
 }
 
 /* мелкие утилиты для серверных страниц */

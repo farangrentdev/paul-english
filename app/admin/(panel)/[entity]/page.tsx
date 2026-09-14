@@ -34,35 +34,37 @@ export default async function EntityListPage({
         <Link className="btn btn--accent" href={`/admin/${key}/new`}>+ Добавить {entity.singular}</Link>
       </div>
 
-      <table className="atable">
-        <thead>
-          <tr>
-            {entity.listColumns.map((c) => (
-              <th key={c.name}>{c.label}</th>
-            ))}
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length === 0 && (
-            <tr><td colSpan={entity.listColumns.length + 1} className="muted">Пока пусто</td></tr>
-          )}
-          {rows.map((r) => {
-            const id = String(r.id);
-            return (
-              <tr key={id}>
-                {entity.listColumns.map((c) => (
-                  <td key={c.name}>{cellValue(entity, r, c.name)}</td>
-                ))}
-                <td className="actions">
-                  <Link className="btn btn--ghost btn--sm" href={`/admin/${key}/${id}`}>Изменить</Link>{" "}
-                  <DeleteButton entityKey={key} id={id} />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div className="atable-wrap">
+        <table className="atable">
+          <thead>
+            <tr>
+              {entity.listColumns.map((c) => (
+                <th key={c.name}>{c.label}</th>
+              ))}
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 && (
+              <tr><td colSpan={entity.listColumns.length + 1} className="muted">Пока пусто</td></tr>
+            )}
+            {rows.map((r) => {
+              const id = String(r.id);
+              return (
+                <tr key={id}>
+                  {entity.listColumns.map((c) => (
+                    <td key={c.name}>{cellValue(entity, r, c.name)}</td>
+                  ))}
+                  <td className="actions">
+                    <Link className="btn btn--ghost btn--sm" href={`/admin/${key}/${id}`}>Изменить</Link>{" "}
+                    <DeleteButton entityKey={key} id={id} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

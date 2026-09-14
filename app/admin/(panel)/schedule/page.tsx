@@ -132,52 +132,54 @@ export default async function AdminSchedulePage({
             Клик по ячейке включает или выключает окошко.
           </p>
 
-          <table className="atable" style={{ marginBottom: 16 }}>
-            <thead>
-              <tr>
-                <th>Время</th>
-                {WEEKDAY_LABELS.map((d) => (
-                  <th key={d} style={{ textAlign: "center" }}>{d}</th>
-                ))}
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {templateTimes.length === 0 && (
-                <tr><td colSpan={9} className="muted">Стандартных часов пока нет — добавьте время ниже</td></tr>
-              )}
-              {templateTimes.map((t) => (
-                <tr key={t}>
-                  <td className="mono-num"><b>{t}</b></td>
-                  {WEEKDAY_LABELS.map((_, i) => {
-                    const weekday = i + 1;
-                    const on = templateOn.get(`${weekday}|${t}`) ?? false;
-                    return (
-                      <td key={weekday} style={{ textAlign: "center" }}>
-                        <form action={toggleWorkingSlot.bind(null, active.id, weekday, t)}>
-                          <button
-                            className={"btn btn--sm " + (on ? "btn--accent" : "btn--ghost")}
-                            style={{ width: "100%", justifyContent: "center", minWidth: 52 }}
-                          >
-                            {on ? "✓" : "—"}
-                          </button>
-                        </form>
-                      </td>
-                    );
-                  })}
-                  <td className="actions">
-                    <ConfirmSubmit
-                      action={removeWorkingTime.bind(null, active.id, t)}
-                      confirmText={`Убрать ${t} из стандартного расписания ${active.name}?`}
-                      style={{ color: "#c0392b" }}
-                    >
-                      Убрать
-                    </ConfirmSubmit>
-                  </td>
+          <div className="atable-wrap">
+            <table className="atable" style={{ marginBottom: 16 }}>
+              <thead>
+                <tr>
+                  <th>Время</th>
+                  {WEEKDAY_LABELS.map((d) => (
+                    <th key={d} style={{ textAlign: "center" }}>{d}</th>
+                  ))}
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {templateTimes.length === 0 && (
+                  <tr><td colSpan={9} className="muted">Стандартных часов пока нет — добавьте время ниже</td></tr>
+                )}
+                {templateTimes.map((t) => (
+                  <tr key={t}>
+                    <td className="mono-num"><b>{t}</b></td>
+                    {WEEKDAY_LABELS.map((_, i) => {
+                      const weekday = i + 1;
+                      const on = templateOn.get(`${weekday}|${t}`) ?? false;
+                      return (
+                        <td key={weekday} style={{ textAlign: "center" }}>
+                          <form action={toggleWorkingSlot.bind(null, active.id, weekday, t)}>
+                            <button
+                              className={"btn btn--sm " + (on ? "btn--accent" : "btn--ghost")}
+                              style={{ width: "100%", justifyContent: "center", minWidth: 52 }}
+                            >
+                              {on ? "✓" : "—"}
+                            </button>
+                          </form>
+                        </td>
+                      );
+                    })}
+                    <td className="actions">
+                      <ConfirmSubmit
+                        action={removeWorkingTime.bind(null, active.id, t)}
+                        confirmText={`Убрать ${t} из стандартного расписания ${active.name}?`}
+                        style={{ color: "#c0392b" }}
+                      >
+                        Убрать
+                      </ConfirmSubmit>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <form action={addWorkingTime.bind(null, active.id)} className="row gap12 center" style={{ flexWrap: "wrap" }}>
             <div className="field" style={{ maxWidth: 160 }}>
@@ -214,105 +216,109 @@ export default async function AdminSchedulePage({
                 Клик по слоту снимает его с продажи или возвращает обратно. Забронированные снимаются
                 в списке ниже.
               </p>
-              <table className="atable" style={{ marginBottom: 14 }}>
-                <thead>
-                  <tr>
-                    <th>Время</th>
-                    {days.map((d) => (
-                      <th key={d.key} style={{ textAlign: "center" }}>
-                        {d.dayLabel}<br />
-                        <span className="muted" style={{ fontWeight: 400 }}>{d.dateLabel}</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {times.map((t) => (
-                    <tr key={t}>
-                      <td className="mono-num"><b>{t}</b></td>
-                      {days.map((d) => {
-                        const slot = byKey.get(`${d.key}|${t}`);
-                        if (!slot) return <td key={d.key} className="muted" style={{ textAlign: "center" }}>·</td>;
-                        if (slot.status === "booked") {
+              <div className="atable-wrap">
+                <table className="atable" style={{ marginBottom: 14 }}>
+                  <thead>
+                    <tr>
+                      <th>Время</th>
+                      {days.map((d) => (
+                        <th key={d.key} style={{ textAlign: "center" }}>
+                          {d.dayLabel}<br />
+                          <span className="muted" style={{ fontWeight: 400 }}>{d.dateLabel}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {times.map((t) => (
+                      <tr key={t}>
+                        <td className="mono-num"><b>{t}</b></td>
+                        {days.map((d) => {
+                          const slot = byKey.get(`${d.key}|${t}`);
+                          if (!slot) return <td key={d.key} className="muted" style={{ textAlign: "center" }}>·</td>;
+                          if (slot.status === "booked") {
+                            return (
+                              <td key={d.key} style={{ textAlign: "center" }}>
+                                <span className="badge badge--new" title={slot.bookedBy?.email ?? ""}>
+                                  {slot.member?.name ?? slot.bookedBy?.name ?? "занято"}
+                                </span>
+                              </td>
+                            );
+                          }
+                          const isOpen = slot.status === "open";
                           return (
                             <td key={d.key} style={{ textAlign: "center" }}>
-                              <span className="badge badge--new" title={slot.bookedBy?.email ?? ""}>
-                                {slot.member?.name ?? slot.bookedBy?.name ?? "занято"}
-                              </span>
+                              <form action={toggleSlotAvailability.bind(null, slot.id)}>
+                                <button
+                                  className={"btn btn--sm " + (isOpen ? "btn--accent" : "btn--ghost")}
+                                  style={{ width: "100%", justifyContent: "center", minWidth: 52 }}
+                                  title={isOpen ? "открыт для записи" : "снят"}
+                                >
+                                  {isOpen ? "✓" : "—"}
+                                </button>
+                              </form>
                             </td>
                           );
-                        }
-                        const isOpen = slot.status === "open";
-                        return (
-                          <td key={d.key} style={{ textAlign: "center" }}>
-                            <form action={toggleSlotAvailability.bind(null, slot.id)}>
-                              <button
-                                className={"btn btn--sm " + (isOpen ? "btn--accent" : "btn--ghost")}
-                                style={{ width: "100%", justifyContent: "center", minWidth: 52 }}
-                                title={isOpen ? "открыт для записи" : "снят"}
-                              >
-                                {isOpen ? "✓" : "—"}
-                              </button>
-                            </form>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                  <tr>
-                    <td className="muted" style={{ fontSize: 12 }}>день</td>
-                    {days.map((d) => (
-                      <td key={d.key} style={{ textAlign: "center" }}>
-                        <form action={closeDay.bind(null, active.id, d.key)} style={{ display: "inline" }}>
-                          <button className="linklike" style={{ fontSize: 12 }}>снять</button>
-                        </form>
-                        {" / "}
-                        <form action={openDay.bind(null, active.id, d.key)} style={{ display: "inline" }}>
-                          <button className="linklike" style={{ fontSize: 12 }}>вернуть</button>
-                        </form>
-                      </td>
+                        })}
+                      </tr>
                     ))}
-                  </tr>
-                </tbody>
-              </table>
+                    <tr>
+                      <td className="muted" style={{ fontSize: 12 }}>день</td>
+                      {days.map((d) => (
+                        <td key={d.key} style={{ textAlign: "center" }}>
+                          <form action={closeDay.bind(null, active.id, d.key)} style={{ display: "inline" }}>
+                            <button className="linklike" style={{ fontSize: 12 }}>снять</button>
+                          </form>
+                          {" / "}
+                          <form action={openDay.bind(null, active.id, d.key)} style={{ display: "inline" }}>
+                            <button className="linklike" style={{ fontSize: 12 }}>вернуть</button>
+                          </form>
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </>
           )}
 
           <h2 className="serif" style={{ fontSize: 24, margin: "28px 0 12px" }}>
             Записи к {active.name}
           </h2>
-          <table className="atable">
-            <thead>
-              <tr><th>Дата</th><th>Время</th><th>Кто занимается</th><th>Аккаунт</th><th></th></tr>
-            </thead>
-            <tbody>
-              {bookings.length === 0 && (
-                <tr><td colSpan={5} className="muted">Записей пока нет</td></tr>
-              )}
-              {bookings.map((b) => (
-                <tr key={b.id}>
-                  <td className="mono-num">{b.date}</td>
-                  <td className="mono-num"><b>{b.time}</b></td>
-                  <td>
-                    <b>{b.member?.name ?? b.bookedBy?.name ?? "—"}</b>
-                    {b.member && !b.member.isSelf && (
-                      <><br /><span className="muted">{b.member.relation}{b.member.note ? ` · ${b.member.note}` : ""}</span></>
-                    )}
-                  </td>
-                  <td className="muted">{b.bookedBy?.email ?? "—"}</td>
-                  <td className="actions">
-                    <ConfirmSubmit
-                      action={cancelBooking.bind(null, b.id)}
-                      confirmText="Снять запись? Занятие удалится, слот снова станет свободным."
-                      style={{ color: "#c0392b" }}
-                    >
-                      Снять
-                    </ConfirmSubmit>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="atable-wrap">
+            <table className="atable">
+              <thead>
+                <tr><th>Дата</th><th>Время</th><th>Кто занимается</th><th>Аккаунт</th><th></th></tr>
+              </thead>
+              <tbody>
+                {bookings.length === 0 && (
+                  <tr><td colSpan={5} className="muted">Записей пока нет</td></tr>
+                )}
+                {bookings.map((b) => (
+                  <tr key={b.id}>
+                    <td className="mono-num">{b.date}</td>
+                    <td className="mono-num"><b>{b.time}</b></td>
+                    <td>
+                      <b>{b.member?.name ?? b.bookedBy?.name ?? "—"}</b>
+                      {b.member && !b.member.isSelf && (
+                        <><br /><span className="muted">{b.member.relation}{b.member.note ? ` · ${b.member.note}` : ""}</span></>
+                      )}
+                    </td>
+                    <td className="muted">{b.bookedBy?.email ?? "—"}</td>
+                    <td className="actions">
+                      <ConfirmSubmit
+                        action={cancelBooking.bind(null, b.id)}
+                        confirmText="Снять запись? Занятие удалится, слот снова станет свободным."
+                        style={{ color: "#c0392b" }}
+                      >
+                        Снять
+                      </ConfirmSubmit>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
     </>

@@ -81,24 +81,26 @@ export default async function StudentDetailPage({
       <p className="muted" style={{ marginTop: -6, marginBottom: 12, fontSize: 14 }}>
         Аккаунт и оплата общие. Эти записи нужны, чтобы вы знали, с кем именно урок.
       </p>
-      <table className="atable" style={{ marginBottom: 12 }}>
-        <thead><tr><th>Имя</th><th>Кем приходится</th><th>Заметка</th><th></th></tr></thead>
-        <tbody>
-          {student.family.length === 0 && <tr><td colSpan={4} className="muted">Записей нет</td></tr>}
-          {student.family.map((f) => (
-            <tr key={f.id}>
-              <td><b>{f.name}</b></td>
-              <td className="muted">{f.isSelf ? "владелец аккаунта" : f.relation}</td>
-              <td className="muted">{f.note ?? "—"}</td>
-              <td className="actions">
-                {!f.isSelf && (
-                  <ConfirmSubmit action={deleteFamilyMember.bind(null, id, f.id)} style={{ color: "#c0392b" }}>×</ConfirmSubmit>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="atable-wrap">
+        <table className="atable" style={{ marginBottom: 12 }}>
+          <thead><tr><th>Имя</th><th>Кем приходится</th><th>Заметка</th><th></th></tr></thead>
+          <tbody>
+            {student.family.length === 0 && <tr><td colSpan={4} className="muted">Записей нет</td></tr>}
+            {student.family.map((f) => (
+              <tr key={f.id}>
+                <td><b>{f.name}</b></td>
+                <td className="muted">{f.isSelf ? "владелец аккаунта" : f.relation}</td>
+                <td className="muted">{f.note ?? "—"}</td>
+                <td className="actions">
+                  {!f.isSelf && (
+                    <ConfirmSubmit action={deleteFamilyMember.bind(null, id, f.id)} style={{ color: "#c0392b" }}>×</ConfirmSubmit>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <form action={addFamilyMember.bind(null, id)} className="aform" style={{ maxWidth: "none" }}>
         <div className="row2">
           <div className="field"><label>Имя</label><input className="input" name="name" placeholder="Миша" required /></div>
@@ -115,23 +117,25 @@ export default async function StudentDetailPage({
 
       {/* пакеты */}
       <h2 className="serif" style={{ fontSize: 24, margin: "26px 0 12px" }}>Пакеты занятий</h2>
-      <table className="atable" style={{ marginBottom: 12 }}>
-        <thead><tr><th>Пакет</th><th>Занятий</th><th>Осталось</th><th>Примечание</th><th></th></tr></thead>
-        <tbody>
-          {student.purchases.length === 0 && <tr><td colSpan={5} className="muted">Пакетов нет</td></tr>}
-          {student.purchases.map((p) => (
-            <tr key={p.id}>
-              <td><b>{p.packageName}</b></td>
-              <td className="mono-num">{p.lessonsUsed} / {p.lessonsTotal}</td>
-              <td><span className="badge badge--new">{Math.max(0, p.lessonsTotal - p.lessonsUsed)}</span></td>
-              <td className="muted">{p.note ?? "—"}</td>
-              <td className="actions">
-                <ConfirmSubmit action={deletePurchase.bind(null, id, p.id)} confirmText="Удалить пакет?" style={{ color: "#c0392b" }}>×</ConfirmSubmit>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="atable-wrap">
+        <table className="atable" style={{ marginBottom: 12 }}>
+          <thead><tr><th>Пакет</th><th>Занятий</th><th>Осталось</th><th>Примечание</th><th></th></tr></thead>
+          <tbody>
+            {student.purchases.length === 0 && <tr><td colSpan={5} className="muted">Пакетов нет</td></tr>}
+            {student.purchases.map((p) => (
+              <tr key={p.id}>
+                <td><b>{p.packageName}</b></td>
+                <td className="mono-num">{p.lessonsUsed} / {p.lessonsTotal}</td>
+                <td><span className="badge badge--new">{Math.max(0, p.lessonsTotal - p.lessonsUsed)}</span></td>
+                <td className="muted">{p.note ?? "—"}</td>
+                <td className="actions">
+                  <ConfirmSubmit action={deletePurchase.bind(null, id, p.id)} confirmText="Удалить пакет?" style={{ color: "#c0392b" }}>×</ConfirmSubmit>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <form action={addPurchase.bind(null, id)} className="aform" style={{ maxWidth: "none" }}>
         <div className="row2">
           <div className="field">
@@ -152,36 +156,38 @@ export default async function StudentDetailPage({
       <p className="muted" style={{ marginTop: -6, marginBottom: 12, fontSize: 14 }}>
         Статус «проведено» списывает одно занятие из пакета, возврат в «запланировано» — возвращает.
       </p>
-      <table className="atable" style={{ marginBottom: 12 }}>
-        <thead><tr><th>Дата</th><th>Время</th><th>Тема</th><th>Кто / педагог</th><th>Статус</th><th></th></tr></thead>
-        <tbody>
-          {student.lessons.length === 0 && <tr><td colSpan={6} className="muted">Нет занятий</td></tr>}
-          {student.lessons.map((l) => (
-            <tr key={l.id}>
-              <td>{l.dateLabel}</td>
-              <td className="mono-num">{l.time}</td>
-              <td>{l.topic}</td>
-              <td className="muted">
-                {l.member?.name ?? "—"}
-                {l.teacher ? <><br />педагог: {l.teacher.name}</> : null}
-              </td>
-              <td>
-                <div className="row gap8" style={{ flexWrap: "wrap" }}>
-                  {[["plan", "план"], ["done", "проведено"], ["canceled", "отменено"]].map(([v, label]) => (
-                    <form key={v} action={setLessonStatus.bind(null, id, l.id, v)}>
-                      <button className={"btn btn--sm " + (l.status === v ? "btn--accent" : "btn--ghost")}>
-                        {label}
-                      </button>
-                    </form>
-                  ))}
-                </div>
-                {l.countedAt && <span className="muted" style={{ fontSize: 12 }}>списано из пакета</span>}
-              </td>
-              <td className="actions"><ConfirmSubmit action={deleteLesson.bind(null, id, l.id)} style={{ color: "#c0392b" }}>×</ConfirmSubmit></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="atable-wrap">
+        <table className="atable" style={{ marginBottom: 12 }}>
+          <thead><tr><th>Дата</th><th>Время</th><th>Тема</th><th>Кто / педагог</th><th>Статус</th><th></th></tr></thead>
+          <tbody>
+            {student.lessons.length === 0 && <tr><td colSpan={6} className="muted">Нет занятий</td></tr>}
+            {student.lessons.map((l) => (
+              <tr key={l.id}>
+                <td>{l.dateLabel}</td>
+                <td className="mono-num">{l.time}</td>
+                <td>{l.topic}</td>
+                <td className="muted">
+                  {l.member?.name ?? "—"}
+                  {l.teacher ? <><br />педагог: {l.teacher.name}</> : null}
+                </td>
+                <td>
+                  <div className="row gap8" style={{ flexWrap: "wrap" }}>
+                    {[["plan", "план"], ["done", "проведено"], ["canceled", "отменено"]].map(([v, label]) => (
+                      <form key={v} action={setLessonStatus.bind(null, id, l.id, v)}>
+                        <button className={"btn btn--sm " + (l.status === v ? "btn--accent" : "btn--ghost")}>
+                          {label}
+                        </button>
+                      </form>
+                    ))}
+                  </div>
+                  {l.countedAt && <span className="muted" style={{ fontSize: 12 }}>списано из пакета</span>}
+                </td>
+                <td className="actions"><ConfirmSubmit action={deleteLesson.bind(null, id, l.id)} style={{ color: "#c0392b" }}>×</ConfirmSubmit></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <form action={addLesson.bind(null, id)} className="aform" style={{ maxWidth: "none" }}>
         <div className="row2">
           <div className="field"><label>Дата (текст)</label><input className="input" name="dateLabel" placeholder="Чт, 5 июня" /></div>
@@ -203,18 +209,20 @@ export default async function StudentDetailPage({
 
       {/* журнал */}
       <h2 className="serif" style={{ fontSize: 24, margin: "26px 0 12px" }}>Журнал</h2>
-      <table className="atable" style={{ marginBottom: 12 }}>
-        <thead><tr><th>Дата</th><th>Оценка</th><th>Тема</th><th>Комментарий</th><th></th></tr></thead>
-        <tbody>
-          {student.journal.length === 0 && <tr><td colSpan={5} className="muted">Нет записей</td></tr>}
-          {student.journal.map((j) => (
-            <tr key={j.id}>
-              <td>{j.date}</td><td><b>{j.mark}</b></td><td>{j.topic}</td><td className="muted">{j.note}</td>
-              <td className="actions"><ConfirmSubmit action={deleteJournal.bind(null, id, j.id)} style={{ color: "#c0392b" }}>×</ConfirmSubmit></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="atable-wrap">
+        <table className="atable" style={{ marginBottom: 12 }}>
+          <thead><tr><th>Дата</th><th>Оценка</th><th>Тема</th><th>Комментарий</th><th></th></tr></thead>
+          <tbody>
+            {student.journal.length === 0 && <tr><td colSpan={5} className="muted">Нет записей</td></tr>}
+            {student.journal.map((j) => (
+              <tr key={j.id}>
+                <td>{j.date}</td><td><b>{j.mark}</b></td><td>{j.topic}</td><td className="muted">{j.note}</td>
+                <td className="actions"><ConfirmSubmit action={deleteJournal.bind(null, id, j.id)} style={{ color: "#c0392b" }}>×</ConfirmSubmit></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <form action={addJournal.bind(null, id)} className="aform" style={{ maxWidth: "none" }}>
         <div className="row2">
           <div className="field"><label>Дата</label><input className="input" name="date" placeholder="30 мая" /></div>
@@ -227,19 +235,21 @@ export default async function StudentDetailPage({
 
       {/* материалы */}
       <h2 className="serif" style={{ fontSize: 24, margin: "26px 0 12px" }}>Материалы ученика</h2>
-      <table className="atable" style={{ marginBottom: 12 }}>
-        <thead><tr><th>Тип</th><th>Название</th><th>Размер</th><th>Файл</th><th></th></tr></thead>
-        <tbody>
-          {student.materials.length === 0 && <tr><td colSpan={5} className="muted">Нет материалов</td></tr>}
-          {student.materials.map((m) => (
-            <tr key={m.id}>
-              <td>{m.tag}</td><td>{m.title}</td><td className="muted">{m.size}</td>
-              <td className="muted">{m.fileUrl ? <a href={m.fileUrl} target="_blank" rel="noreferrer">ссылка</a> : "—"}</td>
-              <td className="actions"><ConfirmSubmit action={deleteStudentMaterial.bind(null, id, m.id)} style={{ color: "#c0392b" }}>×</ConfirmSubmit></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="atable-wrap">
+        <table className="atable" style={{ marginBottom: 12 }}>
+          <thead><tr><th>Тип</th><th>Название</th><th>Размер</th><th>Файл</th><th></th></tr></thead>
+          <tbody>
+            {student.materials.length === 0 && <tr><td colSpan={5} className="muted">Нет материалов</td></tr>}
+            {student.materials.map((m) => (
+              <tr key={m.id}>
+                <td>{m.tag}</td><td>{m.title}</td><td className="muted">{m.size}</td>
+                <td className="muted">{m.fileUrl ? <a href={m.fileUrl} target="_blank" rel="noreferrer">ссылка</a> : "—"}</td>
+                <td className="actions"><ConfirmSubmit action={deleteStudentMaterial.bind(null, id, m.id)} style={{ color: "#c0392b" }}>×</ConfirmSubmit></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <form action={addMaterial.bind(null, id)} className="aform" style={{ maxWidth: "none" }}>
         <div className="row2">
           <div className="field"><label>Тип</label><input className="input" name="tag" placeholder="PDF" /></div>
@@ -252,20 +262,22 @@ export default async function StudentDetailPage({
 
       {/* платежи */}
       <h2 className="serif" style={{ fontSize: 24, margin: "26px 0 12px" }}>Платежи</h2>
-      <table className="atable">
-        <thead><tr><th>Пакет</th><th>Сумма</th><th>Статус</th><th>Дата</th></tr></thead>
-        <tbody>
-          {student.payments.length === 0 && <tr><td colSpan={4} className="muted">Платежей нет</td></tr>}
-          {student.payments.map((p) => (
-            <tr key={p.id}>
-              <td>{p.packageName} · {p.period}</td>
-              <td className="mono-num">{fmt(p.amount)}</td>
-              <td><span className="badge">{p.status}</span></td>
-              <td className="muted">{(p.paidAt ?? p.createdAt) ? new Date(p.paidAt ?? p.createdAt).toLocaleDateString("ru-RU") : "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="atable-wrap">
+        <table className="atable">
+          <thead><tr><th>Пакет</th><th>Сумма</th><th>Статус</th><th>Дата</th></tr></thead>
+          <tbody>
+            {student.payments.length === 0 && <tr><td colSpan={4} className="muted">Платежей нет</td></tr>}
+            {student.payments.map((p) => (
+              <tr key={p.id}>
+                <td>{p.packageName} · {p.period}</td>
+                <td className="mono-num">{fmt(p.amount)}</td>
+                <td><span className="badge">{p.status}</span></td>
+                <td className="muted">{(p.paidAt ?? p.createdAt) ? new Date(p.paidAt ?? p.createdAt).toLocaleDateString("ru-RU") : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

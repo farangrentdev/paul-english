@@ -6,7 +6,7 @@ import { createPurchaseForPayment } from "@/lib/packages";
 // Webhook ЮKassa: payment.succeeded / payment.canceled.
 // Для надёжности перепроверяем статус через API по id.
 export async function POST(req: Request) {
-  if (!yookassaConfigured()) {
+  if (!(await yookassaConfigured())) {
     return NextResponse.json({ ok: true, skipped: "not configured" });
   }
 

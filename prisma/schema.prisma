@@ -292,3 +292,18 @@ model ScheduleSlot {
   @@unique([teacherId, date, time])
   @@index([date])
 }
+
+// Настройки приёма платежей. Singleton (id = 1).
+// Секретный ключ хранится зашифрованным — см. lib/crypto.ts.
+model PaymentSettings {
+  id             Int      @id @default(1)
+  provider       String   @default("yookassa") // yookassa | yomoney
+  shopId         String   @default("")
+  secretKeyEnc   String?  // зашифрованный секретный ключ
+  liveMode       Boolean  @default(false) // false = тестовый магазин ЮKassa
+  enabled        Boolean  @default(false) // выключено → демо-режим оплаты
+  lastCheckedAt  DateTime?
+  lastCheckOk    Boolean?
+  lastCheckError String?
+  updatedAt      DateTime @updatedAt
+}

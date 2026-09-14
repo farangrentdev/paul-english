@@ -11,6 +11,7 @@
   display: grid;
   grid-template-columns: 240px 1fr;
   min-height: 100vh;
+  min-width: 0;
 }
 .admin__side {
   border-right: 1.5px solid var(--ink);
@@ -65,7 +66,9 @@
   border-radius: 999px;
   padding: 1px 8px;
 }
-.admin__main { padding: 30px 34px 60px; max-width: 1100px; }
+/* min-width: 0 обязателен: иначе grid-элемент не сжимается и широкие
+   таблицы распирают всю страницу вместо прокрутки внутри .atable-wrap */
+.admin__main { padding: 30px 34px 60px; max-width: 1100px; min-width: 0; }
 .admin__head {
   display: flex;
   align-items: flex-end;
@@ -174,6 +177,17 @@
   .flash { padding: 10px 12px; font-size: 14px; }
   /* кнопки в формах занимают всю ширину — удобнее пальцем */
   .aform__actions .btn { width: 100%; }
+}
+
+/* длинные слова в заголовках переносятся, а не торчат за край */
+.admin__head h1,
+.cab-login__card h1 { overflow-wrap: anywhere; }
+
+/* экран входа на узких экранах */
+@media (max-width: 560px) {
+  .cab-login { padding: 32px 14px; }
+  .cab-login__card { padding: 24px 20px; }
+  .cab-login__card h1 { font-size: 30px !important; }
 }
 
 /* мелкие утилиты для серверных страниц */
